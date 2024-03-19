@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:latest AS build
+FROM golang:1.22.0-bullseye AS build
 
 WORKDIR /workspace
 

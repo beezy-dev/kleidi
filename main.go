@@ -19,14 +19,15 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/beezy-dev/kleidi/providers"
 	"k8s.io/kms/pkg/service"
 	"k8s.io/kms/pkg/util"
-	"k8s.io/kms/plugins/mock/pkcs11"
 )
 
 var (
@@ -40,12 +41,12 @@ func main() {
 
 	addr, err := util.ParseEndpoint(*listenAddr)
 	if err != nil {
-		panic("failed to parse endpoint: " + err.Error())
+		log.Fatal("failed to parse endpoint: " + err.Error())
 	}
 
-	remoteKMSService, err := pkcs11.NewPKCS11RemoteService(*configFilePath, "kms-test")
+	remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kms-test")
 	if err != nil {
-		panic("failed to create remote service: " + err.Error())
+		log.Fatal("failed to create remote service with error: " + err.Error())
 	}
 
 	ctx := withShutdownSignal(context.Background())
@@ -57,7 +58,7 @@ func main() {
 
 	go func() {
 		if err := grpcService.ListenAndServe(); err != nil {
-			panic("failed to serve: " + err.Error())
+			log.Fatal("failed to serve: " + err.Error())
 		}
 	}()
 
