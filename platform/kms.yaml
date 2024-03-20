@@ -27,9 +27,9 @@ spec:
       apk add --update --no-cache ca-certificates jq
       apk add --no-cache ccid opensc softhsm
       
-      TOKEN_LABEL=$(jq -r '.tokenLabel' /tmp/softhsm-config.json)
-      PIN=$(jq -r '.pin' /tmp/softhsm-config.json)
-      MODULE_PATH=$(jq -r '.path' /tmp/softhsm-config.json)
+      TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/softhsm/config.json)
+      PIN=$(jq -r '.pin' /opt/softhsm/config.json)
+      MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
 
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
       pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kms-test
@@ -42,7 +42,7 @@ spec:
     volumeMounts:
     - mountPath: /var/lib/softhsm/tokens
       name: softhsm-tokens
-    - mountPath: /tmp/softhsm/config.json
+    - mountPath: /opt/softhsm/config.json
       name: softhsm-config
   containers:
     - name: kleidi-provider
@@ -52,7 +52,7 @@ spec:
         - name: sock
           mountPath: /tmp
         - name: softhsm-config
-          mountPath: /tmp/softhsm/config.json
+          mountPath: /opt/softhsm/config.json
         - name: softhsm-tokens
           mountPath: /var/lib/softhsm/tokens
   volumes:
@@ -61,7 +61,7 @@ spec:
         path: /tmp
     - name: softhsm-config
       hostPath:
-        path: /tmp/softhsm/config.json
+        path: /opt/softhsm/config.json
         type: File
     - name: softhsm-tokens
       hostPath:

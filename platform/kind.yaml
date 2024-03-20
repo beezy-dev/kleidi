@@ -10,7 +10,7 @@ nodes:
     - hostPath: platform/encryption
       containerPath: /etc/kubernetes/encryption
     - hostPath: platform/softhsm
-      containerPath: /tmp/softhsm
+      containerPath: /opt/softhsm
   kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
@@ -25,7 +25,7 @@ nodes:
           readOnly: false
           pathType: File
         - name: "kleidi"
-          hostPath: /tmp/softhsm/config.json
-          mountPath: /tmp/softhsm/config.json
+          hostPath: /opt/softhsm/config.json
+          mountPath: /opt/softhsm/config.json
           readOnly: false
           pathType: File
