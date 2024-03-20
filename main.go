@@ -53,27 +53,26 @@ func main() {
 	flag.Parse()
 
 	// defining the socket location
-	log.Println("Info: endpoint location defined as:", *listenAddr)
+	log.Println("INFO: listen-addr flag set as:", *listenAddr)
 	addr, err := util.ParseEndpoint(*listenAddr)
 	if err != nil {
-		log.Fatalln("Fatal: failed to parse endpoint:", err.Error())
+		log.Fatalln("EXIT: listen-addr flag failed with error:", err.Error())
 	}
 
 	// checking which provider to call
+	log.Println("INFO: provider-service flag set as:", *providerService)
 	providerServices := []string{"pkcs11", "vault"}
 	if !slices.Contains(providerServices, *providerService) {
-		log.Fatalln("Fatal:", providerService, "is not supported. Refer to documentation for supported provider services.")
+		log.Fatalln("EXIT: provider-service flag set to", *providerService, "is not supported. Refer to documentation for supported provider services.")
 	}
 
 	switch *providerService {
 	case "pkcs11":
-		log.Println("Info: Provider is set to:", *providerService)
-
 		// calling for the KMS services and checking connectivity
-		log.Println("Info: configuration file location defined as:", *configFilePath)
-		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kms-test")
+		log.Println("INFO: config-file-path flag set as:", *configFilePath)
+		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi")
 		if err != nil {
-			log.Fatalln("Fatal: failed to create remote service with error:", err.Error())
+			log.Fatalln("EXIT: config-file-path, set to", *configFilePath, ", failed with error:", err.Error())
 		}
 
 		// catch SIG termination
@@ -86,7 +85,7 @@ func main() {
 		// starting service
 		go func() {
 			if err := grpcService.ListenAndServe(); err != nil {
-				log.Fatalln("Fatal: failed to serve:", err.Error())
+				log.Fatalln("EXIT: failed to serve with error:", err.Error())
 			}
 		}()
 
@@ -94,8 +93,7 @@ func main() {
 		grpcService.Shutdown()
 
 	case "vault":
-		log.Println("Info: Provider is set to:", *providerService)
-		log.Fatalln("Fatal: Provider is not yet implemented.")
+		log.Fatalln("EXIT: provider-service flag, set to", *providerService, ", is not yet implemented.")
 	}
 }
 
