@@ -8,4 +8,9 @@ resources:
           keys:
             - name: key1
               secret: sfzsUFbNX5NOyPzDrRGvsRcBagO/0h5ifxTMKX5wfDE=
+      - kms:
+          apiVersion: 2
+          name: kleidi
+          endpoint: unix:///tmp/kms.socket
+          timeout: 5s
       - identity: {}
