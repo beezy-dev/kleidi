@@ -18,12 +18,12 @@ spec:
       set -x
 
       # if token exists, skip initialization
-      if [ $(ls -1 /opt/softhsm/tokens | wc -l) -ge 1 ]; then
+      if [ $(ls -1 /var/lib/softhsm/tokens | wc -l) -ge 1 ]; then
         echo "Skipping initialization of softhsm"
         exit 0
       fi
 
-      mkdir -p /opt/softhsm/tokens
+      mkdir -p /var/lib/softhsm/tokens
       apk add --update --no-cache ca-certificates jq
       apk add --no-cache ccid opensc softhsm
       
@@ -40,7 +40,7 @@ spec:
     imagePullPolicy: Always
     name: init-kleidi-provider
     volumeMounts:
-    - mountPath: /opt/softhsm/tokens
+    - mountPath: /var/lib/softhsm/tokens
       name: softhsm-tokens
     - mountPath: /opt/softhsm/config.json
       name: softhsm-config
@@ -54,7 +54,7 @@ spec:
         - name: softhsm-config
           mountPath: /opt/softhsm/config.json
         - name: softhsm-tokens
-          mountPath: /opt/softhsm/tokens
+          mountPath: /var/lib/softhsm/tokens
   volumes:
     - name: sock
       hostPath:
@@ -65,5 +65,5 @@ spec:
         type: File
     - name: softhsm-tokens
       hostPath:
-        path: /opt/softhsm/tokens
+        path: /var/lib/softhsm/tokens
         type: DirectoryOrCreate
