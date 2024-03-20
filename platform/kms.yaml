@@ -38,6 +38,8 @@ spec:
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
       pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-test
 
+      softhsm2-util --show-slots
+
       ls -al /var/lib/softhsm/tokens
     command:
     - /bin/sh
