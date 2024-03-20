@@ -38,7 +38,7 @@ spec:
     - /bin/sh
     - -c
     image: alpine:latest
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     name: init-kleidi-provider
     volumeMounts:
     - mountPath: /opt/softhsm/tokens
@@ -48,7 +48,7 @@ spec:
   containers:
     - name: kleidi-provider-plugin
       image: ghcr.io/beezy-dev/kleidi:0.2
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       volumeMounts:
         - name: sock
           mountPath: /tmp
