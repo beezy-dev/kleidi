@@ -29,7 +29,7 @@ var (
 	listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi.socket", "gRPC listen address.")
 	timeout         = flag.Duration("timeout", 5*time.Second, "gRPC timeout.")
 	providerService = flag.String("provider-service", "pkcs11", "KMS provider to connect to (pkcs11, vault).")
-	configFilePath  = flag.String("config-file-path", "/etc/softhsm-config.json", "SoftHSM config file pat.")
+	configFilePath  = flag.String("config-file-path", "/opt/softhsm/config.json", "SoftHSM config file pat.")
 )
 
 func main() {
