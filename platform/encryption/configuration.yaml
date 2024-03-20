@@ -11,6 +11,6 @@ resources:
       - kms:
           apiVersion: 2
           name: kleidi
-          endpoint: unix:///tmp/kms.socket
+          endpoint: unix:///tmp/kleidi.socket
           timeout: 5s
       - identity: {}
