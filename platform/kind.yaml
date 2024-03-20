@@ -22,8 +22,3 @@ nodes:
           mountPath: /etc/kubernetes/encryption/configuration.yaml
           readOnly: false
           pathType: File
-        - name: "kleidi"
-          hostPath: /etc/kubernetes/encryption/softhsm-config.json
-          mountPath: /etc/kubernetes/encryption/softhsm-config.json
-          readOnly: false
-          pathType: File
