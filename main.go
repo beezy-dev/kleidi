@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 
@@ -30,40 +31,72 @@ import (
 	"k8s.io/kms/pkg/util"
 )
 
+const (
+	kleidVersion = "0.1"
+)
+
 var (
-	listenAddr     = flag.String("listen-addr", "unix:///tmp/kms.socket", "gRPC listen address")
-	timeout        = flag.Duration("timeout", 5*time.Second, "gRPC timeout")
-	configFilePath = flag.String("config-file-path", "/etc/softhsm-config.json", "SoftHSM config file path")
+	listenAddr      = flag.String("listen-addr", "unix:///tmp/kms.socket", "gRPC listen address.")
+	timeout         = flag.Duration("timeout", 5*time.Second, "gRPC timeout.")
+	providerService = flag.String("provider-service", "pkcs11", "KMS provider to connect to (pkcs11, vault).")
+	configFilePath  = flag.String("config-file-path", "/etc/softhsm-config.json", "SoftHSM config file pat.")
 )
 
 func main() {
+
+	log.Println("--------------------------------------------------------")
+	log.Println("Kleidi", "v"+kleidVersion, "KMS Provider Plugin for Kubernetes.")
+	log.Println("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
+	log.Println("--------------------------------------------------------")
+
+	// parsing environment variables
 	flag.Parse()
 
+	// defining the socket location
+	log.Println("Info: endpoint location defined as:", *listenAddr)
 	addr, err := util.ParseEndpoint(*listenAddr)
 	if err != nil {
-		log.Fatal("failed to parse endpoint: " + err.Error())
+		log.Fatalln("Fatal: failed to parse endpoint:", err.Error())
 	}
 
-	remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kms-test")
-	if err != nil {
-		log.Fatal("failed to create remote service with error: " + err.Error())
+	// checking which provider to call
+	providerServices := []string{"pkcs11", "vault"}
+	if !slices.Contains(providerServices, *providerService) {
+		log.Fatalln("Fatal:", providerService, "is not supported. Refer to documentation for supported provider services.")
 	}
 
-	ctx := withShutdownSignal(context.Background())
-	grpcService := service.NewGRPCService(
-		addr,
-		*timeout,
-		remoteKMSService,
-	)
+	switch *providerService {
+	case "pkcs11":
+		log.Println("Info: Provider is set to:", *providerService)
 
-	go func() {
-		if err := grpcService.ListenAndServe(); err != nil {
-			log.Fatal("failed to serve: " + err.Error())
+		// calling for the KMS services and checking connectivity
+		log.Println("Info: configuration file location defined as:", *configFilePath)
+		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kms-test")
+		if err != nil {
+			log.Fatalln("Fatal: failed to create remote service with error:", err.Error())
 		}
-	}()
 
-	<-ctx.Done()
-	grpcService.Shutdown()
+		// catch SIG termination
+		ctx := withShutdownSignal(context.Background())
+		grpcService := service.NewGRPCService(
+			addr,
+			*timeout,
+			remoteKMSService,
+		)
+		// starting service
+		go func() {
+			if err := grpcService.ListenAndServe(); err != nil {
+				log.Fatalln("Fatal: failed to serve:", err.Error())
+			}
+		}()
+
+		<-ctx.Done()
+		grpcService.Shutdown()
+
+	case "vault":
+		log.Println("Info: Provider is set to:", *providerService)
+		log.Fatalln("Fatal: Provider is not yet implemented.")
+	}
 }
 
 // withShutdownSignal returns a copy of the parent context that will close if
