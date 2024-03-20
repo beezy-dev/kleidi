@@ -17,6 +17,10 @@ spec:
       set -e
       set -x
 
+      ls -al /usr/lib/softhsm/libsofthsm2.so
+      ls -al /usr/lib64/libsofthsm2.so
+      whereis libsofthsm2.so
+
       # if token exists, skip initialization
       if [ $(ls -1 /var/lib/softhsm/tokens | wc -l) -ge 1 ]; then
         echo "Skipping initialization of softhsm"
@@ -33,6 +37,8 @@ spec:
 
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
       pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-test
+
+      ls -al /var/lib/softhsm/tokens
     command:
     - /bin/sh
     - -c
