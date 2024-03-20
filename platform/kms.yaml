@@ -17,8 +17,6 @@ spec:
       set -e
       set -x
 
-      whereis libsofthsm2.so
-
       # if token exists, skip initialization
       if [ $(ls -1 /var/lib/softhsm/tokens | wc -l) -ge 1 ]; then
         echo "Skipping initialization of softhsm"
