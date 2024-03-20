@@ -27,6 +27,7 @@ spec:
       apk add --update --no-cache ca-certificates jq
       apk add --no-cache ccid opensc softhsm
       
+      cat /opt/softhsm/config.json
       TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/softhsm/config.json)
       PIN=$(jq -r '.pin' /opt/softhsm/config.json)
       MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
