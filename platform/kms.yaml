@@ -42,7 +42,7 @@ spec:
     volumeMounts:
     - mountPath: /var/lib/softhsm/tokens
       name: softhsm-tokens
-    - mountPath: /etc/softhsm-config.json
+    - mountPath: /etc/kubernetes/softhsm/softhsm-config.json
       name: softhsm-config
   containers:
     - name: kleidi-provider
@@ -52,7 +52,7 @@ spec:
         - name: sock
           mountPath: /tmp
         - name: softhsm-config
-          mountPath: /etc/softhsm-config.json
+          mountPath: /etc/kubernetes/softhsm/softhsm-config.json
         - name: softhsm-tokens
           mountPath: /var/lib/softhsm/tokens
   volumes:
@@ -61,7 +61,7 @@ spec:
         path: /tmp
     - name: softhsm-config
       hostPath:
-        path: /etc/softhsm-config.json
+        path: /etc/kubernetes/softhsm/softhsm-config.json
         type: File
     - name: softhsm-tokens
       hostPath:
