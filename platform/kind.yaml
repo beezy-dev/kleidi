@@ -25,7 +25,7 @@ nodes:
           readOnly: false
           pathType: File
         - name: "kleidi"
-          hostPath: /tmp/softhsm/softhsm-config.json
-          mountPath: /tmp/softhsm/softhsm-config.json
+          hostPath: /tmp/softhsm/config.json
+          mountPath: /tmp/softhsm/config.json
           readOnly: false
           pathType: File
