@@ -17,7 +17,6 @@ spec:
       set -e
       set -x
 
-      ls -al /usr/lib64/libsofthsm2.so
       whereis libsofthsm2.so
 
       # if token exists, skip initialization
