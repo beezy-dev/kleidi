@@ -1,6 +1,6 @@
 {
   "tokenLabel": "kleidi",
   "pin": "1234",
-  "path": "test"
+  "path": "/usr/lib64/libsofthsm2.so"
 }
 

@@ -18,7 +18,7 @@ spec:
       set -x
 
       # if token exists, skip initialization
-      if [ $(ls -1 /var/lib/softhsm/tokens | wc -l) -ge 1 ]; then
+      if [ $(ls -1 /opt/softhsm/tokens | wc -l) -ge 1 ]; then
         echo "Skipping initialization of softhsm"
         exit 0
       fi
@@ -32,7 +32,7 @@ spec:
       MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
 
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
-      pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kms-test
+      pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-test
     command:
     - /bin/sh
     - -c
@@ -40,7 +40,7 @@ spec:
     imagePullPolicy: IfNotPresent
     name: init-kleidi-provider
     volumeMounts:
-    - mountPath: /var/lib/softhsm/tokens
+    - mountPath: /opt/softhsm/tokens
       name: softhsm-tokens
     - mountPath: /opt/softhsm/config.json
       name: softhsm-config
@@ -54,7 +54,7 @@ spec:
         - name: softhsm-config
           mountPath: /opt/softhsm/config.json
         - name: softhsm-tokens
-          mountPath: /var/lib/softhsm/tokens
+          mountPath: /opt/softhsm/tokens
   volumes:
     - name: sock
       hostPath:
@@ -64,5 +64,5 @@ spec:
         path: /opt/softhsm
     - name: softhsm-tokens
       hostPath:
-        path: /var/lib/softhsm/tokens
+        path: /opt/softhsm/tokens
         type: DirectoryOrCreate
