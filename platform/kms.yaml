@@ -61,8 +61,7 @@ spec:
         path: /tmp
     - name: softhsm-config
       hostPath:
-        path: /opt/softhsm/config.json
-        type: File
+        path: /opt/softhsm
     - name: softhsm-tokens
       hostPath:
         path: /var/lib/softhsm/tokens
