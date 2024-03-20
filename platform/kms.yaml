@@ -46,8 +46,8 @@ spec:
     - mountPath: /opt/softhsm/config.json
       name: softhsm-config
   containers:
-    - name: kleidi-provider
-      image: ghcr.io/romdalf/kleidi:latest
+    - name: kleidi-provider-plugin
+      image: ghcr.io/beezy-dev/kleidi:0.1
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: sock
