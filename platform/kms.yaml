@@ -47,7 +47,7 @@ spec:
       name: softhsm-config
   containers:
     - name: kleidi-provider-plugin
-      image: ghcr.io/beezy-dev/kleidi:0.1
+      image: ghcr.io/beezy-dev/kleidi:0.2
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: sock
