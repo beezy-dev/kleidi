@@ -60,7 +60,7 @@ func main() {
 	case "pkcs11":
 		// calling for the KMS services and checking connectivity
 		log.Println("INFO: config-file-path flag set as:", *configFilePath)
-		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi")
+		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi-kms")
 		if err != nil {
 			log.Fatalln("EXIT: config-file-path, set to", *configFilePath, ", failed with error:", err.Error())
 		}

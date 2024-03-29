@@ -1,6 +1,6 @@
 {
   "tokenLabel": "kleidi",
   "pin": "1234",
-  "path": "/usr/lib/softhsm/libsofthsm2.so"
+  "path": "/usr/lib64/softhsm/libsofthsm.so" 
 }
 

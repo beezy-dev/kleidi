@@ -32,7 +32,7 @@ spec:
       MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
 
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
-      pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-test
+      pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-kms
 
       softhsm2-util --show-slots
 

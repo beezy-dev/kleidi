@@ -1,0 +1,3 @@
+FROM quay.io/centos/centos:stream9
+RUN dnf -y install opensc softhsm; dnf clean all;
+CMD [ "/sbin/init" ]
