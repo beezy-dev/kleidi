@@ -19,6 +19,7 @@ The code provides the following:
 
 The kleidi brings the following improvements:
 
+* 
 * a generic bootstrap and deployment agnostic of the Linux flavor
 * a logging susbsystem 
 * an improved configuration
@@ -43,6 +44,10 @@ This version is a PoC and should never be used in production-grade environments.
 
 ### Deploy
 
+The current implementation has been tested on:
+
+* kind
+* rke2 
 
 
 
