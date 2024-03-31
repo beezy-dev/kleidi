@@ -1,12 +1,14 @@
-FROM golang:1.22.0-bullseye AS build
+FROM docker.io/library/golang:1.22.0-bullseye AS build
 
+ARG VERSION
+ENV VERSION $VERSION
 WORKDIR /work
 
 # Copy the source
 COPY ./* /work/
 WORKDIR /work/
 
-RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -a -installsuffix cgo -o kleidi-plugin main.go
+RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo -o kleidi-plugin main.go
 
 FROM registry.access.redhat.com/ubi8/ubi-micro:latest
 
