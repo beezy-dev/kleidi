@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 # Define variables 
 VERSION=$(git log -1 --pretty=%h)
 GITREPO="https://github.com/beezy-dev/kleidi.git" 
-CONTREG="ghcr.io/beezy-dev/kleidi-kms" 
+CONTREG="ghcr.io/beezy-dev/kleidi-kms-plugin" 
 BUILDDT=$(date '+%F_%H:%M:%S' )
 
 STR="'$*'" 
