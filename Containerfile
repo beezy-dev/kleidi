@@ -19,6 +19,6 @@ LABEL org.opencontainers.image.source "https://github.com/beezy-dev/kleidi"
 LABEL org.opencontainers.image.description "Kleidi is an open-source Kubernetes Provider Plugin supporting multiple KMS services." 
 LABEL org.opencontainers.image.documentation "https://beezy.dev/kleidi/"
 
-COPY --from=build ./work/kleidi-plugin .
+COPY --from=build ./work/kleidi-kms-plugin .
 
 ENTRYPOINT [ "./kleidi-kms-plugin" ]
