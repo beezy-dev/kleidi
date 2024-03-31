@@ -34,12 +34,13 @@ echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}."
 git push
 
 echo -e "${NC}Building kleidi container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f Containerfile-kleidi-kms-plugin -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
+podman build -f platform/kleidi-kms-plugin/Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
 
 echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}latest${NC}." 
 podman push $CONTREG:$VERSION
 podman push $CONTREG:latest
 
 echo -e "${NC}Building kleidi init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f platform/kleidi-init/Containerfile -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
 podman push $INITREG:$VERSION
 podman push $INITREG:latest
