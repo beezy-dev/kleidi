@@ -49,7 +49,7 @@ The current implementation has been tested on:
 * kind
 * rke2 
 
-
+The ```platform/softhsm/config.json``` is using a ```lib64``` path for RHEL-based container images like the provided init image.
 
 ## kleidi r&d
 

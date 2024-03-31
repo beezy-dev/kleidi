@@ -40,7 +40,7 @@ spec:
     command:
     - /bin/sh
     - -c
-    image: alpine:latest
+    image: ghcr.io/beezy-dev/kleidi-kms-init:latest
     imagePullPolicy: Always
     name: init-kleidi-provider
     volumeMounts:
@@ -50,7 +50,7 @@ spec:
       name: softhsm-config
   containers:
     - name: kleidi-provider-plugin
-      image: ghcr.io/beezy-dev/kleidi:0.2
+      image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
       imagePullPolicy: Always
       volumeMounts:
         - name: sock
