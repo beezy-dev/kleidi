@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi.socket", "gRPC listen address.")
+	listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi-kms-plugin.socket", "gRPC listen address.")
 	timeout         = flag.Duration("timeout", 5*time.Second, "gRPC timeout.")
 	providerService = flag.String("provider-service", "pkcs11", "KMS provider to connect to (pkcs11, vault).")
 	configFilePath  = flag.String("config-file-path", "/opt/softhsm/config.json", "SoftHSM config file pat.")
@@ -57,7 +57,7 @@ func main() {
 	case "pkcs11":
 		// calling for the KMS services and checking connectivity
 		log.Println("INFO: config-file-path flag set to:", *configFilePath)
-		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi-kms")
+		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi-kms-plugin")
 		if err != nil {
 			log.Fatalln("EXIT: config-file-path, set to", *configFilePath, ", failed with error:", err.Error())
 		}

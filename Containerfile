@@ -8,7 +8,7 @@ WORKDIR /work
 COPY ./* /work/
 WORKDIR /work/
 
-RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo -o kleidi-plugin main.go
+RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo -o kleidi-kms-plugin main.go
 
 FROM registry.access.redhat.com/ubi8/ubi-micro:latest
 
@@ -21,4 +21,4 @@ LABEL org.opencontainers.image.documentation "https://beezy.dev/kleidi/"
 
 COPY --from=build ./work/kleidi-plugin .
 
-ENTRYPOINT [ "./kleidi-plugin" ]
+ENTRYPOINT [ "./kleidi-kms-plugin" ]
