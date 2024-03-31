@@ -34,7 +34,7 @@ echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}."
 git push
 
 echo -e "${NC}Building kleidi container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f platform/kleidi-kms-plugin/Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
+podman build -f Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
 
 echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}latest${NC}." 
 podman push $CONTREG:$VERSION
