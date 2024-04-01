@@ -25,13 +25,14 @@ const (
 	socketTimeOut	= 5*time.Second
 )
 
+var kleidiVersion string
+
 func main() {
 	var (
 		listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi-kms-plugin.socket", "gRPC listen address.")
 		timeout         = flag.Duration("timeout", socketTimeOut, "gRPC timeout.")
 		providerService = flag.String("provider-service", "pkcs11", "KMS provider to connect to (pkcs11, vault).")
 		configFilePath  = flag.String("config-file-path", "/opt/softhsm/config.json", "SoftHSM config file pat.")
-		kleidiVersion   string
 	)
 
 	// parsing environment variables.
