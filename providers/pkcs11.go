@@ -13,7 +13,6 @@ import (
 	"fmt"
 
 	crypot11 "github.com/ThalesIgnite/crypto11"
-
 	"k8s.io/kms/pkg/service"
 )
 
@@ -47,9 +46,11 @@ func NewPKCS11RemoteService(configFilePath, keyID string) (service.Service, erro
 	if err != nil {
 		return nil, err
 	}
+
 	if key == nil {
 		return nil, fmt.Errorf("key not found")
 	}
+
 	if remoteService.aead, err = key.NewGCM(); err != nil {
 		return nil, err
 	}
@@ -60,13 +61,16 @@ func NewPKCS11RemoteService(configFilePath, keyID string) (service.Service, erro
 func (s *pkcs11RemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 	nonceSize := s.aead.NonceSize()
 	result := make([]byte, nonceSize+s.aead.Overhead()+len(plaintext))
+
 	n, err := rand.Read(result[:nonceSize])
 	if err != nil {
 		return nil, err
 	}
+
 	if n != nonceSize {
 		return nil, fmt.Errorf("unable to read sufficient random bytes")
 	}
+
 	cipherText := s.aead.Seal(result[nonceSize:nonceSize], result[:nonceSize], plaintext, []byte(s.keyID))
 
 	return &service.EncryptResponse{
@@ -79,9 +83,11 @@ func (s *pkcs11RemoteService) Encrypt(ctx context.Context, uid string, plaintext
 }
 
 func (s *pkcs11RemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+
 	if len(req.Annotations) != 1 {
 		return nil, fmt.Errorf("invalid annotations")
 	}
+
 	if v, ok := req.Annotations[mockAnnotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("invalid version in annotations")
 	}
@@ -91,6 +97,7 @@ func (s *pkcs11RemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	}
 
 	nonceSize := s.aead.NonceSize()
+
 	data := req.Ciphertext
 	if len(data) < nonceSize {
 		return nil, fmt.Errorf("the stored data was shorter than the required size")

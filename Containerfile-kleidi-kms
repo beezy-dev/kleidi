@@ -8,7 +8,8 @@ WORKDIR /work
 COPY ./* /work/
 WORKDIR /work/
 
-RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo -o kleidi-kms-plugin main.go
+# RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo -o kleidi-kms-plugin main.go
+RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -a -installsuffix cgo main.go
 
 FROM registry.access.redhat.com/ubi8/ubi-micro:latest
 
@@ -19,6 +20,6 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.description="Kleidi is an open-source Kubernetes Plugin supporting multiple KMS services." 
 LABEL org.opencontainers.image.documentation="https://beezy.dev/kleidi/"
 
-COPY --from=build ./work/kleidi-kms-plugin .
+COPY --from=build ./work/main ./kleidi-kms-plugin
 
 ENTRYPOINT [ "./kleidi-kms-plugin" ]
