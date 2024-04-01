@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: kleidi-provider
+  name: kleidi-kms-plugin
   namespace: kube-system
   labels:
     tier: control-plane
-    component: kleidi-provider
+    component: kleidi-kms-plugin
 spec:
   # hostNetwork: true is required because the plugin is run as a static pod
   # on the control plane node and needs to run before the CNI plugins are initialized.
@@ -24,8 +24,6 @@ spec:
       fi
 
       mkdir -p /var/lib/softhsm/tokens
-      apk add --update --no-cache ca-certificates jq
-      apk add --no-cache ccid opensc softhsm
       
       TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/softhsm/config.json)
       PIN=$(jq -r '.pin' /opt/softhsm/config.json)
@@ -42,14 +40,14 @@ spec:
     - -c
     image: ghcr.io/beezy-dev/kleidi-kms-init:latest
     imagePullPolicy: Always
-    name: init-kleidi-provider
+    name: kleidi-kms-init
     volumeMounts:
     - mountPath: /var/lib/softhsm/tokens
       name: softhsm-tokens
     - mountPath: /opt/softhsm/config.json
       name: softhsm-config
   containers:
-    - name: kleidi-provider-plugin
+    - name: kleidi-kms-plugin
       image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
       imagePullPolicy: Always
       volumeMounts:

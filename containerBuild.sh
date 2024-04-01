@@ -26,9 +26,9 @@ BUILDDT=$(date '+%F_%H:%M:%S' )
 
 STR="'$*'" 
 
-echo 
-echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
-gosec -no-fail -fmt sarif -out results.sarif ./...
+# echo 
+# echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
+# gosec -no-fail -fmt sarif -out results.sarif ./...
 
 echo 
 echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
