@@ -1,0 +1,13 @@
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+      - configmaps
+    providers:
+      - identity: {}
+      - kms:
+          apiVersion: v2
+          name: kleidi-kms-plugin
+          endpoint: unix:///tmp/kleidi/kleidi-kms-plugin.socket
+          timeout: 5s

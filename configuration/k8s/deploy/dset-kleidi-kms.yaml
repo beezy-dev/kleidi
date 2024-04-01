@@ -1,0 +1,98 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kleidi-kms-plugin
+  namespace: kube-system
+  labels:
+    tier: control-plane
+    component: kleidi-kms-plugin
+spec:
+  selector:
+    matchLabels:
+      name: kleidi-kms-plugin
+  template:
+    metadata:
+      labels:
+        name: kleidi-kms-plugin
+    spec:
+      priorityClassName: system-cluster-critical
+      hostNetwork: true
+      initContainers:
+        - name: kleidi-kms-init
+          image: ghcr.io/beezy-dev/kleidi-kms-init:latest
+          imagePullPolicy: Always
+          args:
+            - |
+              #!/bin/sh
+              set -e
+              set -x
+
+              # if token exists, skip initialization
+              if [ $(ls -1 /var/lib/softhsm/tokens | wc -l) -ge 1 ]; then
+                echo "Skipping initialization of softhsm"
+                exit 0
+              fi
+
+              mkdir -p /var/lib/softhsm/tokens
+              
+              TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/softhsm/config.json)
+              PIN=$(jq -r '.pin' /opt/softhsm/config.json)
+              MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
+
+              softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
+              pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-kms-plugin
+
+              softhsm2-util --show-slots
+
+              ls -al /var/lib/softhsm/tokens
+          command:
+          - /bin/sh
+          - -c
+          volumeMounts:
+          - mountPath: /var/lib/softhsm/tokens
+            name: softhsm-tokens
+          - mountPath: /opt/softhsm/config.json
+            name: softhsm-config
+      containers:
+        - name: kleidi-kms-plugin
+          image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: sock
+              mountPath: /tmp/kleidi
+            - name: softhsm-config
+              mountPath: /opt/softhsm/config.json
+            - name: softhsm-tokens
+              mountPath: /var/lib/softhsm/tokens
+      volumes:
+        - name: sock
+          hostPath:
+            path: /tmp/kleidi
+            type: DirectoryOrCreate
+        - name: softhsm-config
+          hostPath:
+            path: /opt/softhsm/config.json
+            type: File
+        - name: softhsm-tokens
+          hostPath:
+            path: /var/lib/softhsm/tokens
+            type: DirectoryOrCreate
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/etcd
+          operator: Exists
+          effect: NoExecute

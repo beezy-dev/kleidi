@@ -52,7 +52,7 @@ spec:
       imagePullPolicy: Always
       volumeMounts:
         - name: sock
-          mountPath: /tmp
+          mountPath: /tmp/kleidi
         - name: softhsm-config
           mountPath: /opt/softhsm/config.json
         - name: softhsm-tokens
@@ -60,7 +60,8 @@ spec:
   volumes:
     - name: sock
       hostPath:
-        path: /tmp
+        path: /tmp/kleidi
+        type: DirectoryOrCreate
     - name: softhsm-config
       hostPath:
         path: /opt/softhsm/config.json

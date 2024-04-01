@@ -38,7 +38,7 @@ When successful, the kleidi container will start and will need to access three v
 * /var/lib(64)/softhsm/ to access the token 
 * /tmp/ to create the gRPC socket 
 
-![kleidiv0.1](images/kleidiv0.1.drawio.png)
+![kleidiv0.1](docs/images/kleidiv0.1.drawio.png)
 
 This version is a PoC and should never be used in production-grade environments. 
 
@@ -60,11 +60,11 @@ Two versions of kleidi is anticipated:
 
 ### module-based architecture
 
-![klediv0.2-modules](images/klediv0.2-modules.drawio.png)
+![klediv0.2-modules](docs/images/klediv0.2-modules.drawio.png)
 
 ### SoftHSM embedded architecture
 
-![kleidiv0.2-softhsm](images/klediv0.2-softhsm.drawio.png)
+![kleidiv0.2-softhsm](docs/images/klediv0.2-softhsm.drawio.png)
 
 
 
