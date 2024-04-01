@@ -45,6 +45,6 @@ podman push $CONTREG:$VERSION
 podman push $CONTREG:latest
 
 echo -e "${NC}Building kleidi init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f platform/kleidi-init/Containerfile -t "$INITREG:$VERSION" -t "$INITREG:latest" --build-arg VERSION="$VERSION"
+podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:$VERSION" -t "$INITREG:latest" --build-arg VERSION="$VERSION"
 podman push $INITREG:$VERSION
 podman push $INITREG:latest
