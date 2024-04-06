@@ -24,6 +24,8 @@ Stability! Any prior release marked KMSv2 as non stable. Here is the extract fro
 
 This is related to security exposure and how credential handling practice differs between application and infrastructure management with [physical/virtual] machine and with a container platform like Kubernetes. 
 
+More to be said and understood with [Kubernetes Secrets Handbook](https://www.amazon.com/Kubernetes-Secrets-Handbook-production-grade-management/dp/180512322X)
+
 ## Physical/Virtual machine world
 In the legacy world, the entire IT organization is segmented into knowledge domains like networking, storage, compute, application, etc. 
 Each domain team has its own set of credentials, credentials that are never shared cross-domains. 
