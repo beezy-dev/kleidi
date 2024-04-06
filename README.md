@@ -20,9 +20,7 @@ Stability! Any prior release marked KMSv2 as non stable. Here is the extract fro
 * HashiCorp Vault Community Edition/openbao integration. 
 
 
-# Implementation 
-
-Why a Kubernetes KMS Plugin?   
+# Why a KMS Provider Plugin for Kubernetes? 
 
 This is related to security exposure and how credential handling practice differs between application and infrastructure management with [physical/virtual] machine and with a container platform like Kubernetes. 
 
@@ -63,21 +61,13 @@ What are the exposures:
 - In both cases, if there is API server attack, then the secret will can be retrieved by the attacker in clear. 
 - The ```etcd``` key-value datastore is stored on the control plane filesystem. Having the filesystem encrypted is helping to secure the datastore file from being read, except if the node has been compromised with root access. 
 
-
-However, 
-
-
 Thanks to Red Hat colleagues, Francois Duthilleul and Frederic Herrmann, for spending time on analyzing the gaps.
 
+# Implementation
 
 ## kleidi v0.1 
 
 Kleidi is bootstrapped a code base from the [Kunernetes mock KMS plugin](https://github.com/kubernetes/kms/tree/master/internal/plugins/_mock). This provide a PKCS#11 interface PoC leveraging a local software HSM from the project [SoftHSM](https://www.opendnssec.org/softhsm/).
-
-
-
-
-
 
 
 The code provides the following:
