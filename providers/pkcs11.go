@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	mockAnnotationKey = "version.encryption.remote.io"
+	annotationKey = "v2.kleidi.beezy.dev"
 )
 
 var _ service.Service = &pkcs11RemoteService{}
@@ -77,7 +77,7 @@ func (s *pkcs11RemoteService) Encrypt(ctx context.Context, uid string, plaintext
 		Ciphertext: result[:nonceSize+len(cipherText)],
 		KeyID:      s.keyID,
 		Annotations: map[string][]byte{
-			mockAnnotationKey: []byte("1"),
+			annotationKey: []byte("1"),
 		},
 	}, nil
 }
@@ -88,7 +88,7 @@ func (s *pkcs11RemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		return nil, fmt.Errorf("invalid annotations")
 	}
 
-	if v, ok := req.Annotations[mockAnnotationKey]; !ok || string(v) != "1" {
+	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("invalid version in annotations")
 	}
 

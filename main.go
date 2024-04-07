@@ -31,7 +31,7 @@ func main() {
 	var (
 		listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
 		timeout         = flag.Duration("timeout", socketTimeOut, "gRPC timeout.")
-		providerService = flag.String("provider-service", "pkcs11", "KMS provider to connect to (pkcs11, vault).")
+		providerService = flag.String("provider-service", "softhsm", "KMS provider to connect to (hvault, softhsm, TPM).")
 		configFilePath  = flag.String("config-file-path", "/opt/softhsm/config.json", "SoftHSM config file pat.")
 	)
 
@@ -52,7 +52,7 @@ func main() {
 	log.Println("INFO: listen-addr set to", *listenAddr)
 
 	// checking which provider to call.
-	providerServices := []string{"pkcs11", "vault"}
+	providerServices := []string{"softhsm", "hvault", "TPM"}
 	if !slices.Contains(providerServices, *providerService) {
 		log.Fatalln("EXIT: provider-service set to", *providerService, "is not supported.")
 	}
@@ -60,7 +60,7 @@ func main() {
 	log.Println("INFO: provider-service set to", *providerService)
 
 	switch *providerService {
-	case "pkcs11":
+	case "softhsm":
 		// calling for the KMS services and checking connectivity.
 		remoteKMSService, err := providers.NewPKCS11RemoteService(*configFilePath, "kleidi-kms-plugin")
 		if err != nil {
@@ -86,7 +86,9 @@ func main() {
 		<-ctx.Done()
 		grpcService.Shutdown()
 
-	case "vault":
+	case "hvault":
+		log.Fatalln("EXIT: provider-service set to", *providerService, "is not yet implemented.")
+	case "TPM":
 		log.Fatalln("EXIT: provider-service set to", *providerService, "is not yet implemented.")
 	}
 }
