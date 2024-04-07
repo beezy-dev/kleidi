@@ -1,4 +1,4 @@
-# kleidi KMS Provider Plugin for Kubernetes
+# kleidi KMS provider plugin for Kubernetes
 
 ## Current feature
 * KMSv2 
@@ -20,7 +20,7 @@ Stability! Any prior release marked KMSv2 as non-stable. Here is the extract fro
 * HashiCorp Vault Community Edition/openbao integration. 
 
 
-# Why a KMS Provider Plugin for Kubernetes? 
+# Why a KMS provider plugin for Kubernetes? 
 
 This is related to security exposure and how credential handling practices differ between application and infrastructure management with [physical/virtual] machines and with a container platform like Kubernetes. 
 
@@ -35,7 +35,7 @@ When an application team asks for a virtual machine:
 This quick overview can be enriched with all other layers like storage, backup, networking, monitoring, etc.
 None will cross-share their credentials.
 
-## Container Platform world
+## Container platform world
 Within Kubernetes, the states and configurations of every component, from computing to networking to applications and more, are stored within the ```etcd``` key-value datastore. 
 
 Even if cloud-native applications can interact directly with a KMS provider like Vault, application and platform credentials are still stored within the cluster. This might also include the token to connect with the KMS provider.
@@ -100,7 +100,7 @@ The current implementation has been tested on:
 * kind
 * rke2 
 
-# kleidi r&d
+# kleidi R&D
 Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
 
 # Origin of kleidi
