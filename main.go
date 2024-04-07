@@ -51,6 +51,11 @@ func main() {
 
 	log.Println("INFO: listen-addr set to", *listenAddr)
 
+	// checking if a socket file already exists on the file system
+	if cleanup := os.Remove(addr); cleanup != nil && !os.IsNotExist(cleanup) {
+		log.Fatalln("EXIT: unable to delete existing socket file", addr, "from directory!")
+	}
+
 	// checking which provider to call.
 	providerServices := []string{"softhsm", "hvault", "TPM"}
 	if !slices.Contains(providerServices, *providerService) {
