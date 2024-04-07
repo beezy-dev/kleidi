@@ -6,17 +6,16 @@
   **Note: it is intended to be used for PoC only, not for production use.**
 
 ## Why 1.29 or later?
-Stability! Any prior release marked KMSv2 as non-stable. Here is the extract from the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/#before-you-begin):
-
-*The version of Kubernetes that you need depends on which KMS API version you have selected. Kubernetes recommends using KMS v2.*
-
+Stability!   
+Any prior release marked KMSv2 as non-stable. Here is the extract from the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/#before-you-begin):  
+*The version of Kubernetes that you need depends on which KMS API version you have selected. Kubernetes recommends using KMS v2.*   
 * *If you selected KMS API v2, you should use Kubernetes v1.29 (if you are running a different version of Kubernetes that also supports the v2 KMS API, switch to the documentation for that version of Kubernetes).*
 * *If you selected KMS API v1 to support clusters before version v1.27 or if you have a legacy KMS plugin that only supports KMS v1, any supported Kubernetes version will work. This API is deprecated as of Kubernetes v1.28. Kubernetes does not recommend the use of this API.*
 
 ## Future feature
 
-* production-grade SoftHSM implementation 
-* (v)TPM integration
+* production-grade SoftHSM implementation. 
+* (v)TPM integration.
 * HashiCorp Vault Community Edition/openbao integration. 
 
 
@@ -61,8 +60,7 @@ What are the exposures:
 * If a KMS provider plugin exists, the API server encrypts the payload and stores it within the ```etcd``` key-value datastore.
 * When using the KMS provider plugin (and for any applications), non-encrypted credentials are stored within Kubernetes to provide access to the KMS provider. 
 * The ```etcd``` key-value datastore is stored on the control plane filesystem. Encrypting the filesystem helps secure the datastore file from being read, except if the node has been compromised with root access.
-* Lastly, if the API server is compromised, any protective measures are useless since the API server will decrypt secrets for the attacker. 
-
+* Lastly, if the API server is compromised, any protective measures are useless since the API server will decrypt secrets for the attacker.  
 Thanks to Red Hat colleagues Francois Duthilleul and Frederic Herrmann for spending time analyzing the gaps.
 
 # Implementation
@@ -81,11 +79,11 @@ The code provides the following:
 
 Based on a gRPC architecture requirement from the Kubernetes project, kleidi lives close to the API server on the master node(s).   
 kleidi depends on a custom ```initContainer``` to streamline the bootstrap of both SoftHSM and PCKS#11 interface using two volumes:   
-* ```/opt/kleidi/``` to store the config.json
+* ```/opt/kleidi/``` to store the ```config.json``` 
 * ```/var/lib(64)/softhsm/``` to set up the HSM token 
 
 With successful ```initContainer```, the ```kleidi-kms-plugin``` container starts and accesses three volumes:   
-* ```/opt/kleidi/``` to access the config.json
+* ```/opt/kleidi/``` to access the ```config.json``` 
 * ```/var/lib(64)/softhsm/``` to access the token 
 * ```/tmp/kleidi``` to create the gRPC socket 
 
@@ -97,12 +95,12 @@ With successful ```initContainer```, the ```kleidi-kms-plugin``` container start
 
 ---TODO---
 The current implementation has been tested on:   
-* kind
-* rke2 
+* Kind
+* RKE2 
 
 # kleidi R&D
 Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
 
 # Origin of kleidi
 Initially, we founded and released [Trousseau](https://trousseau.io) to support the Kubernetes KMSv1 provider plugin. 
-With the Kubernetes project moving to KMSv2 in stable with 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting. Considering the full rewriting and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
+With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting. Considering the complete rewriting and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
