@@ -102,5 +102,9 @@ The current implementation has been tested on:
 Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
 
 # Origin of kleidi
-Initially, we founded and released [Trousseau](https://trousseau.io) to support the Kubernetes KMSv1 provider plugin. 
-With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting. Considering the complete rewriting and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
+
+Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat. 
+With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting. Considering this technical requirement and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
+
+![](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png)
+
