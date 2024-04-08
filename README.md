@@ -1,7 +1,18 @@
 # kleidi KMS provider plugin for Kubernetes
 
-## Current feature
-* KMSv2 
+## Origin of kleidi
+
+<img align="right" src="https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png" width="25%">
+
+Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat.  
+
+With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting.   
+
+<br clear="left"/>
+<br clear="left"/>
+
+## Current state
+* KMSv2 with Kubernetes 1.29 and onwards.
 * PKCS#11 interface with [SoftHSM](https://www.opendnssec.org/softhsm/).   
   **Note: it is intended to be used for PoC only, not for production use.**
 
@@ -12,12 +23,10 @@ Any prior release marked KMSv2 as non-stable. Here is the extract from the [Kube
 * *If you selected KMS API v2, you should use Kubernetes v1.29 (if you are running a different version of Kubernetes that also supports the v2 KMS API, switch to the documentation for that version of Kubernetes).*
 * *If you selected KMS API v1 to support clusters before version v1.27 or if you have a legacy KMS plugin that only supports KMS v1, any supported Kubernetes version will work. This API is deprecated as of Kubernetes v1.28. Kubernetes does not recommend the use of this API.*
 
-## Future feature
-
+## Future state  
 * production-grade SoftHSM implementation. 
 * (v)TPM integration.
 * HashiCorp Vault Community Edition/openbao integration. 
-
 
 # Why a KMS provider plugin for Kubernetes? 
 
@@ -64,9 +73,7 @@ What are the exposures:
 Thanks to Red Hat colleagues Francois Duthilleul and Frederic Herrmann for spending time analyzing the gaps.
 
 # Implementation
-
 ## kleidi v0.1 
-
 kleidi has bootstrapped a code base from the [Kunernetes mock KMS plugin](https://github.com/kubernetes/kms/tree/master/internal/plugins/_mock). This provides a PKCS#11 interface for a local software HSM like [SoftHSM](https://www.opendnssec.org/softhsm/).
 
 The code provides the following:   
@@ -91,23 +98,15 @@ With successful ```initContainer```, the ```kleidi-kms-plugin``` container start
 
 ***This version is a PoC and should never be used in production-grade environments.***
 
-## Deployment
+## kleidi R&D
+Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
+
+# Deployment
 
 ---TODO---
 The current implementation has been tested on:   
 * Kind
 * RKE2 
-
-# kleidi R&D
-Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
-
-# Origin of kleidi
-
-Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat.  
-
-With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting.   
-
 Considering this technical requirement and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
 
-<img src="[https://your-image-url.type](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png)" width="512">
 
