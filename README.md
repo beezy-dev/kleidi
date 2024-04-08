@@ -109,6 +109,5 @@ With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being depre
 
 Considering this technical requirement and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
 
-
-![](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png | width=512)
+<img src="[https://your-image-url.type](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png)" width="512">
 
