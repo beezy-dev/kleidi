@@ -15,11 +15,12 @@ The origin is Greek, and the meaning is "key". (Source: [Wikipedia](https://en.w
 
 ## Current state
 * KMSv2 with Kubernetes 1.29 and onwards.
-* PKCS#11 interface with [SoftHSM](https://www.opendnssec.org/softhsm/).   
+* PKCS#11 interface to [SoftHSM](https://www.opendnssec.org/softhsm/) deployed on the control plane nodes.   
   **Note: it is intended to be used for PoC only, not for production use.**
 
 ## Why 1.29 or later?
 ***Stability!***   
+
 Any prior release marked KMSv2 as non-stable. Here is the extract from the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/#before-you-begin):  
 *The version of Kubernetes that you need depends on which KMS API version you have selected. Kubernetes recommends using KMS v2.*   
 * *If you selected KMS API v2, you should use Kubernetes v1.29 (if you are running a different version of Kubernetes that also supports the v2 KMS API, switch to the documentation for that version of Kubernetes).*
@@ -27,8 +28,8 @@ Any prior release marked KMSv2 as non-stable. Here is the extract from the [Kube
 
 ## Future state  
 * production-grade SoftHSM implementation. 
-* (v)TPM integration.
-* HashiCorp Vault Community Edition/openbao integration. 
+* HashiCorp Vault Community Edition/openbao integration.
+* (v)TPM integration (see R&D)
 
 # Why a KMS provider plugin for Kubernetes? 
 
@@ -65,13 +66,16 @@ The following diagram takes a 10,000-feet overview to explore the security expos
 * The ```etcd``` key-value datastore file is saved on a local volume on the control plane node filesystem. 
 
 What are the exposures:
-* The secret comes from an external source. It requires a base64-encoded payload. This transformation is a first-level exposure of the data field at file and console levels.
-* A common mistake is committing the secret YAML definition to a Git repository. 
-* If no KMS provider plugin exists, the API server stores the base64-encoded secret within the ```etcd``` key-value datastore. 
-* If a KMS provider plugin exists, the API server encrypts the payload and stores it within the ```etcd``` key-value datastore.
-* When using the KMS provider plugin (and for any applications), non-encrypted credentials are stored within Kubernetes to provide access to the KMS provider. 
-* The ```etcd``` key-value datastore is stored on the control plane filesystem. Encrypting the filesystem helps secure the datastore file from being read, except if the node has been compromised with root access.
-* Lastly, if the API server is compromised, any protective measures are useless since the API server will decrypt secrets for the attacker.  
+
+|Exposure | Risk | Mitigation |
+|---------|------|------------|
+|The secret comes from an external source. It requires a base64-encoded payload. | This transformation is a first-level exposure of the data field at file and console levels. | Work an injection mechanism from the password manager or KMS |  
+| A common mistake is committing the secret YAML definition to a Git repository. | The credentials are exposed for life and will need to be rotated. | Don't include any YAML manifest with sensitive data in a Git repository even for testing purposes. Using a tool like SOPS can help prevent such scenario | 
+| If no KMS provider plugin exists. | The API server stores the base64-encoded secret within the ```etcd``` key-value datastore. | Application secrets might benefit from an external KMS. Platform secrets will require a data encryption at rest option provided by Kubernetes. |
+| If a KMS provider plugin exists. | The encryption Key or credentials to access the KMS or HSM are exposed in clear text. | Set up a mTLS authentication if possible. |
+| The ```etcd``` key-value datastore is stored on the control plane filesystem. | The datastore file can be accessed if the node is compromised. | Encrypting the filesystem helps secure the datastore file from being read, except if the node has been compromised with root access. |
+| The API server is the Kubernetes heart and soul. | If the appropriate RBAC or the API server is compromised, all protective measures will be useless since the API server will decrypt all sensitive data fields. | RBAC and masking the API server if possible | 
+
 Thanks to Red Hat colleagues Francois Duthilleul and Frederic Herrmann for spending time analyzing the gaps.
 
 # Implementation
