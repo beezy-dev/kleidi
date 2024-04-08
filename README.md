@@ -6,7 +6,9 @@
 
 Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat.  
 
-With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting.   
+With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated since 1.27, a decision needed to be made regarding rewriting the plugin, leading to the creation of kleidi.
+
+The origin is Greek, and the meaning is "key". (Source: [Wikipedia](https://en.wiktionary.org/wiki/%CE%BA%CE%BB%CE%B5%CE%B9%CE%B4%CE%AF))
 
 <br clear="left"/>
 <br clear="left"/>
