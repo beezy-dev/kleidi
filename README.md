@@ -103,9 +103,12 @@ Considering the security exposures described in this README, an in-platform solu
 
 # Origin of kleidi
 
-Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat. 
-With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting.  
+Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat.  
+
+With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated, a decision needed to be made regarding the plugin's rewriting.   
+
 Considering this technical requirement and Akamai's acquisition of Ondat.io, which sponsored Trousseau's development, the best course of action was to deprecate Trousseau. 
 
-![](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png)
+
+![](https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png | width=512)
 
