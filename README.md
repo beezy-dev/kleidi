@@ -107,6 +107,162 @@ With successful ```initContainer```, the ```kleidi-kms-plugin``` container start
 ## kleidi R&D
 Considering the security exposures described in this README, an in-platform solution leveraging the (v)TPM chipset is currently designed and tested.
 
+# Test
+
+The current testing is done using ```kind``` with the following configuration:
+
+```YAML
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: kind-kleidi
+nodes:
+- role: control-plane
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+  extraMounts:
+    - containerPath: /etc/kubernetes/encryption-config.yaml
+      hostPath: configuration/k8s/encryption/encryption-config.yaml
+      readOnly: true
+      propagation: None 
+    - containerPath: /etc/kubernetes/manifests/kube-kms.yaml
+      hostPath: configuration/k8s/deploy/pod-kleidi-kms.yaml
+      readOnly: true
+      propagation: None
+    - containerPath: /opt/softhsm/config.json
+      hostPath: configuration/softhsm/config.json
+      readOnly: true
+      propagation: None
+  kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraArgs:
+        encryption-provider-config: "/etc/kubernetes/encryption-config.yaml"
+        encryption-provider-config-automatic-reload: "true"
+        v: "5"
+      extraVolumes:
+        - name: encryption-config
+          hostPath: /etc/kubernetes/encryption-config.yaml
+          mountPath: /etc/kubernetes/encryption-config.yaml
+          readOnly: true
+          pathType: File
+        - name: softhsm
+          hostPath: /opt/softhsm/config.json
+          mountPath: /opt/softhsm/config.json
+          readOnly: false
+          pathType: File
+        - name: kleidi-socket
+          hostPath: /tmp/kleidi
+          mountPath: /tmp/kleidi
+      scheduler:
+        extraArgs:
+          v: "5"
+      controllerManager:
+          v: "5"
+- role: worker
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+```
+
+This configuration is available in ```configuration/k8s/kind/kind.yaml``` and a test ```kind``` cluster can be created using the following command:
+
+```
+kind create cluster --config configuration/k8s/kind/config.yaml
+```
+
+Expected output:
+``` 
+Creating cluster "kind-kleidi" ...
+ ✓ Ensuring node image (kindest/node:v1.29.2) 🖼
+ ✓ Preparing nodes 📦 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+ ✓ Joining worker nodes 🚜 
+Set kubectl context to "kind-kind-kleidi"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-kind-kleidi
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+``` 
+
+Note that the successful creation of the ```kind``` equals the successful deployment of ```kleidi``` as we can verified this with the following command:
+
+```
+kubectl get all -A
+```
+
+Expected output
+```
+NAMESPACE            NAME                                                    READY   STATUS    RESTARTS   AGE
+kube-system          pod/coredns-76f75df574-4qbz2                            1/1     Running   0          4m2s
+kube-system          pod/coredns-76f75df574-g6nnf                            1/1     Running   0          4m2s
+kube-system          pod/etcd-kind-kleidi-control-plane                      1/1     Running   0          4m23s
+kube-system          pod/kindnet-k4rpw                                       1/1     Running   0          4m
+kube-system          pod/kindnet-rwv8v                                       1/1     Running   0          4m2s
+kube-system          pod/kleidi-kms-plugin-kind-kleidi-control-plane         1/1     Running   0          4m19s
+kube-system          pod/kube-apiserver-kind-kleidi-control-plane            1/1     Running   0          4m18s
+kube-system          pod/kube-controller-manager-kind-kleidi-control-plane   1/1     Running   0          4m26s
+kube-system          pod/kube-proxy-8kfft                                    1/1     Running   0          4m
+kube-system          pod/kube-proxy-bmqxl                                    1/1     Running   0          4m2s
+kube-system          pod/kube-scheduler-kind-kleidi-control-plane            1/1     Running   0          4m25s
+local-path-storage   pod/local-path-provisioner-7577fdbbfb-vrdk6             1/1     Running   0          4m2s
+```
+
+A test secret can be created using the following command:
+
+```
+kubectl create secret generic encrypted-secret -n default --from-literal=mykey=mydata
+```
+
+The payload encryption can be verified with the following command:
+
+``` 
+kubectl -n kube-system exec etcd-kind-kleidi-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/encrypted-secret" | hexdump -C
+```
+
+Expected ouptut:
+
+```
+00000000  2f 72 65 67 69 73 74 72  79 2f 73 65 63 72 65 74  |/registry/secret|
+00000010  73 2f 64 65 66 61 75 6c  74 2f 65 6e 63 72 79 70  |s/default/encryp|
+00000020  74 65 64 2d 73 65 63 72  65 74 0a 6b 38 73 3a 65  |ted-secret.k8s:e|
+00000030  6e 63 3a 6b 6d 73 3a 76  32 3a 6b 6c 65 69 64 69  |nc:kms:v2:kleidi|
+00000040  2d 6b 6d 73 2d 70 6c 75  67 69 6e 3a 0a a9 02 df  |-kms-plugin:....|
+00000050  44 21 c9 94 2f a6 47 08  d1 9d ad 55 30 96 93 2c  |D!../.G....U0..,|
+00000060  68 88 5c a7 c7 55 46 53  a6 8c 71 75 f4 e2 ff 68  |h.\..UFS..qu...h|
+00000070  d2 6a 10 78 3c 18 6f f6  02 de 79 3c 50 b9 93 97  |.j.x<.o...y<P...|
+00000080  90 13 8c 44 93 51 99 cf  0f 9b 18 30 51 92 96 e8  |...D.Q.....0Q...|
+00000090  ca a2 ad 19 ce 19 34 0f  4a 85 0b ee 5a cf 61 3a  |......4.J...Z.a:|
+000000a0  e1 56 84 6d 4f 71 bc bb  da df 41 05 35 02 c8 af  |.V.mOq....A.5...|
+000000b0  93 4f e0 20 ad 9d a4 3d  5b 93 b5 98 e6 fb 85 74  |.O. ...=[......t|
+000000c0  c5 ab cf 91 2e 1f d8 c1  58 45 af e8 02 cf 54 13  |........XE....T.|
+000000d0  f6 ad 18 1e 53 7c a4 10  32 da da 63 c6 a1 78 29  |....S|..2..c..x)|
+000000e0  8a 9d 42 a7 30 77 92 3f  75 cc a3 49 f1 c0 7d f3  |..B.0w.?u..I..}.|
+000000f0  8f 08 af c0 43 5d 2f 29  6e 70 2c 01 c8 86 f7 4e  |....C]/)np,....N|
+00000100  8b ba 7d 02 34 83 c2 9c  a4 14 b5 f2 a0 70 a6 5c  |..}.4........p.\|
+00000110  86 38 f0 e7 a4 c1 e6 9f  4b 84 f2 3d 80 10 2d 16  |.8......K..=..-.|
+00000120  15 78 87 84 9c 69 f8 9c  21 c2 98 dc 28 fc 1b e6  |.x...i..!...(...|
+00000130  82 46 ca 70 1e be 8a c5  c7 9c 85 eb d6 57 41 f0  |.F.p.........WA.|
+00000140  fa ef c7 be 10 c4 1c 22  cd b5 f4 b0 fe cb bb ae  |......."........|
+00000150  dc c2 96 7d ef 6f 14 a8  97 f4 0a 98 f4 5f 5f 60  |...}.o.......__`|
+00000160  b8 71 72 63 bf 34 c9 4f  53 9c 41 7b 20 1d 3a f2  |.qrc.4.OS.A{ .:.|
+00000170  fe c8 5d da 40 9f 15 e7  12 11 6b 6c 65 69 64 69  |..].@.....kleidi|
+00000180  2d 6b 6d 73 2d 70 6c 75  67 69 6e 1a 40 c5 a5 22  |-kms-plugin.@.."|
+00000190  a7 7e 0e 14 f6 1c 38 49  b5 0a c0 20 ba 75 5a 5e  |.~....8I... .uZ^|
+000001a0  c9 a6 c8 02 c9 d2 27 7a  64 54 66 74 45 2c 82 31  |......'zdTftE,.1|
+000001b0  61 14 50 1e c8 d9 43 1f  4f 96 0f 47 34 eb 69 28  |a.P...C.O..G4.i(|
+000001c0  1b ef bf f8 b5 86 47 c8  75 87 f6 25 95 22 21 0a  |......G.u..%."!.|
+000001d0  1c 76 65 72 73 69 6f 6e  2e 65 6e 63 72 79 70 74  |.version.encrypt|
+000001e0  69 6f 6e 2e 72 65 6d 6f  74 65 2e 69 6f 12 01 31  |ion.remote.io..1|
+000001f0  28 01 0a                                          |(..|
+000001f3
+```
+
+The above extract shows an encrypted payload with the header ```enc:kms:v2:kleidi-kms-plugin:```.
+
+
+
 # Deployment
 
 ---TODO---

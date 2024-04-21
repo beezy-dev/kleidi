@@ -7,8 +7,6 @@ metadata:
     tier: control-plane
     component: kleidi-kms-plugin
 spec:
-  # hostNetwork: true is required because the plugin is run as a static pod
-  # on the control plane node and needs to run before the CNI plugins are initialized.
   hostNetwork: true
   initContainers:
   - args:
@@ -50,6 +48,10 @@ spec:
     - name: kleidi-kms-plugin
       image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
       imagePullPolicy: Always
+      resources:
+        limites:
+          cpu: 300m
+          memory: 256Mi
       volumeMounts:
         - name: sock
           mountPath: /tmp/kleidi
