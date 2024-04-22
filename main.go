@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	socketTimeOut	= 5*time.Second
+	socketTimeOut = 10 * time.Second
 )
 
 var kleidiVersion string
@@ -30,7 +30,6 @@ var kleidiVersion string
 func main() {
 	var (
 		listenAddr      = flag.String("listen-addr", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
-		timeout         = flag.Duration("timeout", socketTimeOut, "gRPC timeout.")
 		providerService = flag.String("provider-service", "softhsm", "KMS provider to connect to (hvault, softhsm, TPM).")
 		configFilePath  = flag.String("config-file-path", "/opt/softhsm/config.json", "SoftHSM config file pat.")
 	)
@@ -43,7 +42,7 @@ func main() {
 	log.Println("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
 	log.Println("--------------------------------------------------------")
 
-	// defining the socket location.	
+	// defining the socket location.
 	addr, err := util.ParseEndpoint(*listenAddr)
 	if err != nil {
 		log.Fatalln("EXIT: listen-addr set to", *listenAddr, "failed with error:\n", err.Error())
@@ -78,7 +77,7 @@ func main() {
 		ctx := withShutdownSignal(context.Background())
 		grpcService := service.NewGRPCService(
 			addr,
-			*timeout,
+			socketTimeOut,
 			remoteKMSService,
 		)
 		// starting service.
@@ -103,7 +102,7 @@ func main() {
 func withShutdownSignal(ctx context.Context) context.Context {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
-	
+
 	nctx, cancel := context.WithCancel(ctx)
 
 	go func() {
