@@ -32,7 +32,7 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 	remoteKMSService, err := providers.NewPKCS11RemoteService(providerConfig, "kleidi-kms-plugin")
 	if err != nil {
-		log.Fatalln("EXIT: remote KMS service set to", provider, "failed with error:\n", err.Error())
+		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}
 	// catch SIG termination.
 	ctx := withShutdownSignal(context.Background())
@@ -54,15 +54,15 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 func startHvault(addr, provider, providerConfig string) {
 
-	log.Println("BETA: provider-service", provider, "is currently unsafe to used in production.")
-	log.Fatalln("EXIT: provider-service", provider, "with config file", providerConfig, "and listening on", addr, "is not yet implemented.")
+	log.Println("BETA: flag -provider", provider, "is currently unsafe to used in production.")
+	log.Fatalln("EXIT: flag -provider", provider, "with flag -configfile", providerConfig, "and flag -listen on", addr, "is not yet implemented.")
 
 }
 
 func startTpm(addr, provider, providerConfig string) {
 
-	log.Println("BETA: provider-service", provider, "is currently unsafe to used in production.")
-	log.Fatalln("EXIT: provider-service", provider, "with config file", providerConfig, "and listening on", addr, "is not yet implemented.")
+	log.Println("BETA: flag -provider", provider, "is currently unsafe to used in production.")
+	log.Fatalln("EXIT: flag -provider", provider, "with flag -configfile", providerConfig, "and flag -listen on", addr, "is not yet implemented.")
 
 }
 

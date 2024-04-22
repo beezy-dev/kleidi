@@ -20,9 +20,9 @@ func main() {
 
 	// Generic vars considering the consistency across providers.
 	var (
-		listenAddr         = flag.String("listen-addr", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
-		providerService    = flag.String("provider-service", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm).")
-		providerConfigFile = flag.String("provider-config-file", "/opt/softhsm/config.json", "Provider config file pat.")
+		listenAddr         = flag.String("listen", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
+		providerService    = flag.String("provider", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm).")
+		providerConfigFile = flag.String("configfile", "/opt/softhsm/config.json", "Provider config file pat.")
 	)
 
 	// Parsing environment variables.
@@ -37,7 +37,7 @@ func main() {
 	// Validating the socket location.
 	addr, err := utils.ValidateListenAddr(*listenAddr)
 	if err != nil {
-		log.Fatalln("EXIT: listen-addr set to", *listenAddr, "failed with error:\n", err.Error())
+		log.Fatalln("EXIT: flag -listen set to", *listenAddr, "failed with error:\n", err.Error())
 	}
 
 	// Checking and cleaning an existing socket in case of ungraceful shutdown.
@@ -48,13 +48,13 @@ func main() {
 	// Validating the provider.
 	provider, err := utils.ValidateProvider(*providerService)
 	if err != nil {
-		log.Fatalln("EXIT: provider-service set to", provider, "failed with error:\n", err.Error())
+		log.Fatalln("EXIT: flag -provider set to", provider, "failed with error:\n", err.Error())
 	}
 
 	// Validating the provider config.
 	providerConfig, err := utils.ValidateConfigfile(*providerConfigFile)
 	if err != nil {
-		log.Fatalln("EXIT: provider-config-file set to", providerConfig, "failed with error:\n", err.Error())
+		log.Fatalln("EXIT: flag -configfile set to", providerConfig, "failed with error:\n", err.Error())
 	}
 
 	//Starting the appropriate provider once previously validated.

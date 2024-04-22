@@ -17,22 +17,22 @@ func ValidateListenAddr(listenAddr string) (string, error) {
 
 	url, err := url.Parse(listenAddr)
 	if err != nil {
-		return url.Path, fmt.Errorf("!!! invalid listen-addr %q, error: %v", listenAddr, err)
+		return url.Path, fmt.Errorf("/!\\ invalid listen-addr %q, error: %v", listenAddr, err)
 	}
 
 	if len(listenAddr) == 0 {
-		return url.Path, fmt.Errorf("!!! can not be an empty string.")
+		return url.Path, fmt.Errorf("/!\\ can not be an empty string.")
 	}
 
 	if url.Scheme != proto {
-		return url.Scheme, fmt.Errorf("!!! proto can be different than unix.")
+		return url.Scheme, fmt.Errorf("/!\\ proto can be different than unix.")
 	}
 
 	if strings.HasPrefix(url.Path, "/@") {
 		return strings.TrimPrefix(url.Path, "/"), nil
 	}
 
-	log.Println("INFO: listen-addr set to", listenAddr)
+	log.Println("INFO: flag -listen set to", listenAddr)
 	return url.Path, nil
 }
 
@@ -40,20 +40,20 @@ func ValidateProvider(providerService string) (string, error) {
 
 	providerServices := []string{"hvault", "softhsm", "tpm"}
 	if !slices.Contains(providerServices, providerService) {
-		return providerService, fmt.Errorf("!!! provider-service is not supported. Only %v are valid options.", providerServices)
+		return providerService, fmt.Errorf("/!\\ flag -provider is not supported. Only %v are valid options.", providerServices)
 	}
 
-	log.Println("INFO: provider-service set to", providerService)
+	log.Println("INFO: flag -provider set to", providerService)
 	return providerService, nil
 }
 
 func ValidateConfigfile(providerConfigFile string) (string, error) {
 
 	if len(providerConfigFile) == 0 {
-		return providerConfigFile, fmt.Errorf("!!! can not be an empty string.")
+		return providerConfigFile, fmt.Errorf("/!\\ can not be an empty string.")
 	}
 
-	log.Println("INFO: config-file-path set to", providerConfigFile)
+	log.Println("INFO: flag -configfile set to", providerConfigFile)
 	return providerConfigFile, nil
 
 }
