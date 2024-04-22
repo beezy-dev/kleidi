@@ -10,13 +10,8 @@ import (
 	"flag"
 	"log"
 	"os"
-	"time"
 
 	"github.com/beez-dev/kleidi/utils"
-)
-
-const (
-	socketTimeOut = 10 * time.Second
 )
 
 var kleidiVersion string
@@ -62,59 +57,9 @@ func main() {
 		log.Fatalln("EXIT: provider-config-file set to", providerConfig, "failed with error:\n", err.Error())
 	}
 
-	startKMS, err := providers.startProvider(addr, provider, providerConfig, socketTimeOut)
-	if err != nil {
-		log.Fatalln("EXIT: provider-config-file set to", providerConfig, "failed with error:\n", err.Error())
-	}
-	log.Println(startKMS)
+	//Starting the appropriate provider once previously validated.
+	//REFACTOR to a simple interface
 
-	// Starting the appropriate provider once previously validated.
-	// REFACTOR to a simple interface
-	// switch provider {
-	// case "softhsm":
+	utils.StartProvider(addr, provider, providerConfig)
 
-	// 	// calling for the KMS services and checking connectivity.
-	// 	remoteKMSService, err := providers.NewPKCS11RemoteService(providerConfig, "kleidi-kms-plugin")
-	// 	if err != nil {
-	// 		log.Fatalln("EXIT: remote KMS service set to", provider, "failed with error:\n", err.Error())
-	// 	}
-
-	// 	// catch SIG termination.
-	// 	ctx := withShutdownSignal(context.Background())
-	// 	grpcService := service.NewGRPCService(
-	// 		addr,
-	// 		socketTimeOut,
-	// 		remoteKMSService,
-	// 	)
-	// 	// starting service.
-	// 	go func() {
-	// 		if err := grpcService.ListenAndServe(); err != nil {
-	// 			log.Fatalln("EXIT: failed to serve with error:\n", err.Error())
-	// 		}
-	// 	}()
-
-	// 	<-ctx.Done()
-	// 	grpcService.Shutdown()
-
-	// case "hvault":
-	// 	log.Fatalln("EXIT: provider-service set to", provider, "is not yet implemented.")
-	// case "tpm":
-	// 	log.Fatalln("EXIT: provider-service set to", provider, "is not yet implemented.")
-	// }
 }
-
-// // withShutdownSignal returns a copy of the parent context that will close if
-// // the process receives termination signals.
-// func withShutdownSignal(ctx context.Context) context.Context {
-// 	signalChan := make(chan os.Signal, 1)
-// 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
-
-// 	nctx, cancel := context.WithCancel(ctx)
-
-// 	go func() {
-// 		<-signalChan
-// 		cancel()
-// 	}()
-
-// 	return nctx
-// }

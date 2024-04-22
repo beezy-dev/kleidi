@@ -43,12 +43,6 @@ func ValidateProvider(providerService string) (string, error) {
 		return providerService, fmt.Errorf("!!! provider-service is not supported. Only %v are valid options.", providerServices)
 	}
 
-	implementedProviders := []string{"softhsm"}
-	if !slices.Contains(implementedProviders, providerService) {
-		return providerService, fmt.Errorf("!!! provider-service is not yet implemented.")
-
-	}
-
 	log.Println("INFO: provider-service set to", providerService)
 	return providerService, nil
 }
