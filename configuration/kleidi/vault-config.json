@@ -1,0 +1,5 @@
+{
+  "tokenLabel": "kleidi-kms-plugin",
+  "pin": "1234",
+  "path": "/usr/lib64/softhsm/libsofthsm.so" 
+}

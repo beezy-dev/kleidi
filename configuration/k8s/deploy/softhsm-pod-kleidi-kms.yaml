@@ -23,9 +23,9 @@ spec:
 
       mkdir -p /var/lib/softhsm/tokens
       
-      TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/softhsm/config.json)
-      PIN=$(jq -r '.pin' /opt/softhsm/config.json)
-      MODULE_PATH=$(jq -r '.path' /opt/softhsm/config.json)
+      TOKEN_LABEL=$(jq -r '.tokenLabel' /opt/kleidi/config.json)
+      PIN=$(jq -r '.pin' /opt/kleidi/config.json)
+      MODULE_PATH=$(jq -r '.path' /opt/kleidi/config.json)
 
       softhsm2-util --init-token --free --label $TOKEN_LABEL --pin $PIN --so-pin $PIN
       pkcs11-tool --module $MODULE_PATH --keygen --key-type aes:32 --pin $PIN --token-label $TOKEN_LABEL --label kleidi-kms-plugin
@@ -42,21 +42,21 @@ spec:
     volumeMounts:
     - mountPath: /var/lib/softhsm/tokens
       name: softhsm-tokens
-    - mountPath: /opt/softhsm/config.json
-      name: softhsm-config
+    - mountPath: /opt/kleidi/config.json
+      name: kleidi-config
   containers:
     - name: kleidi-kms-plugin
       image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
       imagePullPolicy: Always
       resources:
-        limites:
+        limits:
           cpu: 300m
           memory: 256Mi
       volumeMounts:
         - name: sock
           mountPath: /tmp/kleidi
-        - name: softhsm-config
-          mountPath: /opt/softhsm/config.json
+        - name: kleidi-config
+          mountPath: /opt/kleidi/config.json
         - name: softhsm-tokens
           mountPath: /var/lib/softhsm/tokens
   volumes:
@@ -64,9 +64,9 @@ spec:
       hostPath:
         path: /tmp/kleidi
         type: DirectoryOrCreate
-    - name: softhsm-config
+    - name: kleidi-config
       hostPath:
-        path: /opt/softhsm/config.json
+        path: /opt/kleidi/config.json
         type: File
     - name: softhsm-tokens
       hostPath:
