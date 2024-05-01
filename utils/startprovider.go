@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/beez-dev/kleidi/providers"
+	"github.com/beezy-dev/kleidi/providers"
 	"k8s.io/kms/pkg/service"
 )
 

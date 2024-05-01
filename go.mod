@@ -1,4 +1,4 @@
-module github.com/beez-dev/kleidi
+module github.com/beezy-dev/kleidi
 
 go 1.22.0
 
