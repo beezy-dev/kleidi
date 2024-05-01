@@ -54,14 +54,14 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 func startHvault(addr, provider, providerConfig string) {
 
-	log.Println("BETA: flag -provider", provider, "is currently unsafe to used in production.")
+	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
 	providers.HvaultPlaceholder()
 
 }
 
 func startTpm(addr, provider, providerConfig string) {
 
-	log.Println("BETA: flag -provider", provider, "is currently unsafe to used in production.")
+	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
 	providers.TmpPlaceholder()
 
 }

@@ -21,11 +21,11 @@ func ValidateListenAddr(listenAddr string) (string, error) {
 	}
 
 	if len(listenAddr) == 0 {
-		return url.Path, fmt.Errorf("/!\\ can not be an empty string.")
+		return url.Path, fmt.Errorf("/!\\ can not be an empty string")
 	}
 
 	if url.Scheme != proto {
-		return url.Scheme, fmt.Errorf("/!\\ proto can be different than unix.")
+		return url.Scheme, fmt.Errorf("/!\\ proto can be different than unix")
 	}
 
 	if strings.HasPrefix(url.Path, "/@") {
@@ -40,7 +40,7 @@ func ValidateProvider(providerService string) (string, error) {
 
 	providerServices := []string{"hvault", "softhsm", "tpm"}
 	if !slices.Contains(providerServices, providerService) {
-		return providerService, fmt.Errorf("/!\\ flag -provider is not supported. Only %v are valid options.", providerServices)
+		return providerService, fmt.Errorf("/!\\ flag -provider is not supported. Only %v are valid options", providerServices)
 	}
 
 	log.Println("INFO: flag -provider set to", providerService)
@@ -50,7 +50,7 @@ func ValidateProvider(providerService string) (string, error) {
 func ValidateConfigfile(providerConfigFile string) (string, error) {
 
 	if len(providerConfigFile) == 0 {
-		return providerConfigFile, fmt.Errorf("/!\\ can not be an empty string.")
+		return providerConfigFile, fmt.Errorf("/!\\ can not be an empty string")
 	}
 
 	log.Println("INFO: flag -configfile set to", providerConfigFile)
