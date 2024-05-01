@@ -30,12 +30,12 @@ STR="'$*'"
 # echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
 # gosec -no-fail -fmt sarif -out results.sarif ./...
 
-echo 
-echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
-git add --all && git commit -m "$STR" 
+# echo 
+# echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
+# git add --all && git commit -m "$STR" 
 
-echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}." 
-git push
+# echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}." 
+# git push
 
 echo -e "${NC}Building kleidi container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
 podman build -f Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"

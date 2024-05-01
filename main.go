@@ -11,7 +11,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/beez-dev/kleidi/utils"
+	"github.com/beezy-dev/kleidi/utils"
 )
 
 var kleidiVersion string

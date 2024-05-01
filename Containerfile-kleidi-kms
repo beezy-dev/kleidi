@@ -8,7 +8,7 @@ WORKDIR /work
 COPY ./* /work/
 WORKDIR /work/
 
-RUN CGO_ENABLED=1 GOOS=linux GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo main.go
+RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo main.go
 
 FROM quay.io/centos/centos:stream9
 RUN dnf -y install jq opensc softhsm; dnf clean all;
