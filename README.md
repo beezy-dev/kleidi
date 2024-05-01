@@ -590,7 +590,7 @@ serviceaccount/kleidi-vault-auth created
 secret/kleidi-vault-auth created
 clusterrolebinding.rbac.authorization.k8s.io/role-tokenreview-binding created
 ```
-
+ 
 The ```ServiceAccount``` definition from ```configuration/k8s/deploy/vault-sa.yaml```: 
 ```YAML
 ---
