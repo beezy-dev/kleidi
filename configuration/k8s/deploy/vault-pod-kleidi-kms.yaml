@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kleidi-kms-plugin
+  namespace: kube-system
+  labels:
+    tier: control-plane
+    component: kleidi-kms-plugin
+spec:
+  hostNetwork: true
+  containers:
+    - name: kleidi-kms-plugin
+      image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
+      imagePullPolicy: Always
+      args:
+        - -provider=hvault
+      resources:
+        limits:
+          cpu: 300m
+          memory: 256Mi
+      volumeMounts:
+        - name: sock
+          mountPath: /tmp/kleidi
+  volumes:
+    - name: sock
+      hostPath:
+        path: /tmp/kleidi
+        type: DirectoryOrCreate

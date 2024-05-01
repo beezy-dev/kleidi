@@ -49,7 +49,7 @@ spec:
       image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
       imagePullPolicy: Always
       resources:
-        limites:
+        limits:
           cpu: 300m
           memory: 256Mi
       volumeMounts:

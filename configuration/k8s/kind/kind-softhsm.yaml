@@ -1,16 +1,16 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-name: kind-kleidi
+name: kleidi-softhsm
 nodes:
 - role: control-plane
   image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
   extraMounts:
     - containerPath: /etc/kubernetes/encryption-config.yaml
-      hostPath: configuration/k8s/encryption/encryption-config.yaml
+      hostPath: configuration/k8s/encryption/softhsm-encryption-config.yaml
       readOnly: true
       propagation: None 
-    - containerPath: /etc/kubernetes/manifests/kube-kms.yaml
-      hostPath: configuration/k8s/deploy/pod-kleidi-kms.yaml
+    - containerPath: /etc/kubernetes/manifests/kleidi-kms.yaml
+      hostPath: configuration/k8s/deploy/softhsm-pod-kleidi-kms.yaml
       readOnly: true
       propagation: None
     - containerPath: /opt/softhsm/config.json
