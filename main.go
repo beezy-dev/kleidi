@@ -22,7 +22,7 @@ func main() {
 	var (
 		listenAddr         = flag.String("listen", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
 		providerService    = flag.String("provider", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm).")
-		providerConfigFile = flag.String("configfile", "/opt/softhsm/config.json", "Provider config file pat.")
+		providerConfigFile = flag.String("configfile", "/opt/kleidi/config.json", "Provider config file pat.")
 	)
 
 	// Parsing environment variables.

@@ -13,6 +13,10 @@ nodes:
       hostPath: configuration/k8s/deploy/vault-pod-kleidi-kms.yaml
       readOnly: true
       propagation: None
+    - containerPath: /opt/kleidi/config.json
+      hostPath: configuration/kleidi/vault-config.json
+      readOnly: true
+      propagation: None
   kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
@@ -26,6 +30,11 @@ nodes:
           hostPath: /etc/kubernetes/encryption-config.yaml
           mountPath: /etc/kubernetes/encryption-config.yaml
           readOnly: true
+          pathType: File
+        - name: kleidi-config
+          hostPath: /opt/kleidi/config.json
+          mountPath: /opt/kleidi/config.json
+          readOnly: false
           pathType: File
         - name: kleidi-socket
           hostPath: /tmp/kleidi

@@ -22,8 +22,14 @@ spec:
       volumeMounts:
         - name: sock
           mountPath: /tmp/kleidi
+        - name: kleidi-config
+          mountPath: /opt/kleidi/config.json
   volumes:
     - name: sock
       hostPath:
         path: /tmp/kleidi
         type: DirectoryOrCreate
+    - name: kleidi-config
+      hostPath:
+        path: /opt/kleidi/config.json
+        type: File

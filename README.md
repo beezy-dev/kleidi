@@ -661,7 +661,6 @@ Expected output:
 Success! Data written to: auth/kubernetes/role/kleidi
 ```
 
-
 # Deployment
 
 ---TODO---
