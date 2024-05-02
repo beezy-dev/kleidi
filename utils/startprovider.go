@@ -54,8 +54,9 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 func startHvault(addr, provider, providerConfig string) {
 
-	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
-	providers.HvaultPlaceholder()
+	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently in development.")
+	// providers.HvaultPlaceholder()
+	// ConfigureFromFile(providerConfig, provider)
 
 }
 
