@@ -1,6 +1,6 @@
 {
   "Namespace": "admin",
-  "Transit": "kleidi",
-  "Role": "kleidi",
-  "Path": "http://127.0.0.1:8200" 
+  "Transitkey": "kleidi",
+  "Vaultrole": "kleidi",
+  "Address": "http://127.0.0.1:8200" 
 }

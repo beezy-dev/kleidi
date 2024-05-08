@@ -1,37 +1,48 @@
 package providers
 
 import (
-	"crypto/cipher"
-	"fmt"
-
-	"github.com/beezy-dev/kleidi/utils"
-	"k8s.io/kms/pkg/service"
+	"encoding/json"
+	"log"
+	"os"
 )
 
-// func HvaultPlaceholder() {
-// 	log.Fatalln("/!\\ implementation in progress - stay tune!")
-// }
+func HvaultPlaceholder() {
+	log.Fatalln("/!\\ implementation in progress - stay tune!")
+}
 
 // var _ service.Service = &hvaultRemoteService{}
 
-type hvaultRemoteService struct {
-	keyID string
-	aead  cipher.AEAD
+// type hvaultRemoteService struct {
+// 	keyID string
+// 	aead  cipher.AEAD
+// }
+
+// defaults
+// address 127.0.0.1:8200
+// transitKey: kleidikey
+// vaultRole: kleidirole
+// nameSpace: admin (always for community, can be differnent in enterprise)
+type ClientConfig struct {
+	Address    string `json:"Address"`
+	Transitkey string `json:"Transitkey"`
+	Vaultrole  string `json:"Vaultrole"`
+	Namespace  string `json:"Namespace"`
 }
 
-func NewHVaultRemoteService(configFilePath, provider, keyID string) (service.Service, error) {
-	ctx, err := utils.ConfigureFromFile(configFilePath, provider)
+func ConfigFileToClientConfig(configFilePath string) {
+	c, err := os.ReadFile(configFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("/!\\ %v", err)
+		log.Fatalln("EXIT: failed to read vault config file with error:", err.Error())
 	}
+	var clientconfig ClientConfig
+	json.Unmarshal([]byte(c), &clientconfig)
+	log.Println("Vault Client Config:", clientconfig.Address, clientconfig.Namespace, clientconfig.Transitkey, clientconfig.Vaultrole)
 
-	if len(keyID) == 0 {
-		return nil, fmt.Errorf("/!\\ invalid keyID")
-	}
-
-	remoteService := &hvaultRemoteService{
-		keyID: keyID,
-	}
-
-	key, err := ctx.FindKey(nil, []byte(keyID))
 }
+
+// func NewVaultRemoteService(configFilePath, keyID string) (service.Service, error) {
+
+// 	config := vault.DefaultConfig()
+// 	config.Address = clientConfig.adress
+
+// }
