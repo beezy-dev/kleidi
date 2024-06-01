@@ -673,3 +673,5 @@ Considering this technical requirement and Akamai's acquisition of Ondat.io, whi
 
 ## HashiCorp Vault/openbao
 
+
+## Todo Delinea/Thycotic integration 

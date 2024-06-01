@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/beezy-dev/kleidi/providers"
+	"github.com/beezy-dev/kleidi/internal/providers"
 	"k8s.io/kms/pkg/service"
 )
 
@@ -54,8 +54,26 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 func startHvault(addr, provider, providerConfig string) {
 
-	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently in development.")
-	providers.NewHvaultRemoteService(providerConfig, "kleidi-kms-plugin")
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, "kleidi-kms-plugin")
+	if err != nil {
+		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
+	}
+
+	ctx := withShutdownSignal(context.Background())
+	grpcService := service.NewGRPCService(
+		addr,
+		socketTimeOut,
+		remoteKMSService,
+	)
+	go func() {
+		if err := grpcService.ListenAndServe(); err != nil {
+			log.Fatalln("EXIT: failed to serve with error:\n", err.Error())
+		}
+	}()
+
+	<-ctx.Done()
+	grpcService.Shutdown()
+
 }
 
 func startTpm(addr, provider, providerConfig string) {
