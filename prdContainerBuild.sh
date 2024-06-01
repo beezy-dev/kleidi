@@ -26,25 +26,30 @@ BUILDDT=$(date '+%F_%H:%M:%S' )
 
 STR="'$*'" 
 
-echo 
-echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
-gosec -no-fail -fmt sarif -out results.sarif ./...
+# echo 
+# echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
+# gosec -no-fail -fmt sarif -out results.sarif ./...
 
-echo 
-echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
-git add --all && git commit -m "$STR" 
+# echo 
+# echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
+# git add --all && git commit -m "$STR" 
 
-echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}." 
-git push
+# echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}." 
+# git push
 
-echo -e "${NC}Building kleidi container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:latest" --build-arg VERSION="$VERSION"
+echo -e "${NC}Building kleidi vault container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f Containerfile-kleidi-kms-vault -t "$CONTREG:vault-$VERSION" -t "$CONTREG:vault-latest" --build-arg VERSION="$VERSION"
 
-echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}latest${NC}." 
-podman push $CONTREG:$VERSION
-podman push $CONTREG:latest
+echo -e "${NC}Building kleidi hsm container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f Containerfile-kleidi-kms-hsm -t "$CONTREG:hsm-$VERSION" -t "$CONTREG:hsm-latest" --build-arg VERSION="$VERSION"
 
-echo -e "${NC}Building kleidi init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:$VERSION" -t "$INITREG:latest" --build-arg VERSION="$VERSION"
-podman push $INITREG:$VERSION
-podman push $INITREG:latest
+echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}dev${NC}." 
+podman push $CONTREG:vault-$VERSION
+podman push $CONTREG:hsm-$VERSION
+podman push $CONTREG:vault-latest
+podman push $CONTREG:hsm-latest
+
+echo -e "${NC}Building kleidi hsm init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:hsm-$VERSION" -t "$INITREG:hsm-latest" --build-arg VERSION="$VERSION"
+podman push $INITREG:hsm-$VERSION
+podman push $INITREG:hsm-latest
