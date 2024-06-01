@@ -10,7 +10,7 @@ COPY go.sum ./
 COPY go.mod ./
 RUN go mod download
 
-RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo main.go
+RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo cmd/kleidi/main.go
 
 FROM quay.io/centos/centos:stream9
 RUN dnf -y install jq opensc softhsm; dnf clean all;
