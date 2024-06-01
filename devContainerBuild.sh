@@ -37,14 +37,19 @@ git add --all && git commit -m "$STR"
 echo -e "${NC}Git push to ${BLUE}$GITREPO${NC}." 
 git push
 
-echo -e "${NC}Building kleidi dev container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f Containerfile-kleidi-kms -t "$CONTREG:$VERSION" -t "$CONTREG:dev" --build-arg VERSION="$VERSION"
+echo -e "${NC}Building kleidi vault dev container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f Containerfile-kleidi-kms-vault -t "$CONTREG:vault-$VERSION" -t "$CONTREG:vault-dev" --build-arg VERSION="$VERSION"
+
+echo -e "${NC}Building kleidi hsm dev container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f Containerfile-kleidi-kms-hsm -t "$CONTREG:hsm-$VERSION" -t "$CONTREG:hsm-dev" --build-arg VERSION="$VERSION"
 
 echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}dev${NC}." 
-podman push $CONTREG:$VERSION
-podman push $CONTREG:dev
+podman push $CONTREG:vault-$VERSION
+podman push $CONTREG:hsm-$VERSION
+podman push $CONTREG:vault-dev
+podman push $CONTREG:hsm-dev
 
-echo -e "${NC}Building kleidi dev init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:$VERSION" -t "$INITREG:dev" --build-arg VERSION="$VERSION"
-podman push $INITREG:$VERSION
-podman push $INITREG:dev
+echo -e "${NC}Building kleidi hsm dev init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
+podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:hsm-$VERSION" -t "$INITREG:hsm-dev" --build-arg VERSION="$VERSION"
+podman push $INITREG:hsm-$VERSION
+podman push $INITREG:hsm-dev
