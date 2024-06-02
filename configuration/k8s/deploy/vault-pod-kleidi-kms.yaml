@@ -8,10 +8,11 @@ metadata:
     tier: control-plane
     component: kleidi-kms-plugin
 spec:
+  serviceAccount: kleidi-vault-auth
   hostNetwork: true
   containers:
     - name: kleidi-kms-plugin
-      image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
+      image: ghcr.io/beezy-dev/kleidi-kms-plugin:vault-dev
       imagePullPolicy: Always
       args:
         - -provider=hvault

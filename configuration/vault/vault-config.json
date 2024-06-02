@@ -1,5 +1,11 @@
 {
   "disable_mlock": "true",
+  "listener": {
+     "tcp": {
+        "address": "192.168.1.54:8200",
+        "tls_disable": "true"
+     }
+  }, 
   "backend": {
     "file": {
       "path": "/tmp/vault/data"

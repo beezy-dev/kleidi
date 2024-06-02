@@ -4,5 +4,5 @@ resources:
   - resources:
       - secrets
       - configmaps
-    providers:
+    providers: 
       - identity: {}
