@@ -68,7 +68,7 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 			fmt.Print(string(tokenfile))
 		}
 
-		datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
+		datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/data")
 		if err != nil {
 			log.Fatalln("DEBUG: unable to read token directory on auth method error")
 		} else {
