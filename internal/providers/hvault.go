@@ -60,14 +60,14 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 		vaultService.Vaultrole,
 	)
 	if err != nil {
-		log.Println("DEBUG: listing content of default token location")
+		log.Println("DEBUG: listing content of default token file")
 		tokenfile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
 		if err != nil {
 			log.Fatalln("DEBUG: unable to read token directory on auth method error")
 		} else {
 			fmt.Print(string(tokenfile))
 		}
-
+		log.Println("DEBUG: listing content of default data file")
 		datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/data")
 		if err != nil {
 			log.Fatalln("DEBUG: unable to read token directory on auth method error")
