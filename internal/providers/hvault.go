@@ -56,25 +56,29 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 		log.Fatalln("EXIT: failed to initialize Vault client with error:", err.Error())
 	}
 
+	log.Println("--------------------------------------------------------------------------------------------------")
+	log.Println("DEBUG: listing content of default token file")
+	tokenfile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
+	if err != nil {
+		log.Fatalln("DEBUG: unable to read token directory on auth method error")
+	} else {
+		fmt.Print(string(tokenfile))
+	}
+
+	log.Println("DEBUG: listing content of default data file")
+	datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/data")
+	if err != nil {
+		log.Fatalln("DEBUG: unable to read token directory on auth method error")
+	} else {
+		fmt.Print(string(datafile))
+	}
+	log.Println("--------------------------------------------------------------------------------------------------")
+
 	k8sAuth, err := auth.NewKubernetesAuth(
 		vaultService.Vaultrole,
 	)
-	if err != nil {
-		log.Println("DEBUG: listing content of default token file")
-		tokenfile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
-		if err != nil {
-			log.Fatalln("DEBUG: unable to read token directory on auth method error")
-		} else {
-			fmt.Print(string(tokenfile))
-		}
-		log.Println("DEBUG: listing content of default data file")
-		datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/data")
-		if err != nil {
-			log.Fatalln("DEBUG: unable to read token directory on auth method error")
-		} else {
-			fmt.Print(string(datafile))
-		}
 
+	if err != nil {
 		log.Fatalln("EXIT: unable to initialize Kubernetes auth method with error:", err.Error())
 	}
 
