@@ -61,14 +61,20 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 	)
 	if err != nil {
 		log.Println("DEBUG: listing content of default token location")
-		tokendir, err := os.ReadDir("/var/run/secrets/kubernetes.io/serviceaccount/token/")
+		tokenfile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
 		if err != nil {
-			log.Fatalln("DEBUG: unable to list token directory on auth method error")
+			log.Fatalln("DEBUG: unable to read token directory on auth method error")
 		} else {
-			for _, e := range tokendir {
-				fmt.Println(" ", e.Name(), e.IsDir())
-			}
+			fmt.Print(string(tokenfile))
 		}
+
+		datafile, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token/token")
+		if err != nil {
+			log.Fatalln("DEBUG: unable to read token directory on auth method error")
+		} else {
+			fmt.Print(string(datafile))
+		}
+
 		log.Fatalln("EXIT: unable to initialize Kubernetes auth method with error:", err.Error())
 	}
 
