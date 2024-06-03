@@ -21,11 +21,20 @@ spec:
           cpu: 300m
           memory: 256Mi
       volumeMounts:
+        - name: token
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount/token
         - name: sock
           mountPath: /tmp/kleidi
         - name: kleidi-config
           mountPath: /opt/kleidi/config.json
   volumes:
+    - name: token
+      projected:
+        sources:
+        - serviceAccountToken:
+            path: token
+            expirationSeconds: 7200
+            audience: vault
     - name: sock
       hostPath:
         path: /tmp/kleidi

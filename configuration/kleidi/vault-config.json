@@ -2,5 +2,5 @@
   "Namespace": "admin",
   "Transitkey": "kleidi",
   "Vaultrole": "kleidi",
-  "Address": "http://127.0.0.1:8200" 
+  "Address": "http://192.168.172.243:8200" 
 }

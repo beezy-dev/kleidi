@@ -60,6 +60,13 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 		vaultService.Vaultrole,
 	)
 	if err != nil {
+		tokendir, err := os.ReadDir("/var/run/secrets/kubernetes.io/serviceaccount/token/")
+		if err != nil {
+			log.Fatalln("EXIT: unable to list token directory on auth method error")
+		}
+		for _, e := range tokendir {
+			fmt.Println(e.Name())
+		}
 		log.Fatalln("EXIT: unable to initialize Kubernetes auth method with error:", err.Error())
 	}
 

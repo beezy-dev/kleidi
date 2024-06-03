@@ -9,10 +9,6 @@ nodes:
       hostPath: configuration/k8s/encryption/vault-encryption-config.yaml
       readOnly: true
       propagation: None 
-    - containerPath: /etc/kubernetes/manifests/kleidi-kms.yaml
-      hostPath: configuration/k8s/deploy/vault-pod-kleidi-kms.yaml
-      readOnly: true
-      propagation: None
     - containerPath: /opt/kleidi/config.json
       hostPath: configuration/kleidi/vault-config.json
       readOnly: true
