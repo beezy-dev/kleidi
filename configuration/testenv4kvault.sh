@@ -56,9 +56,9 @@ kind delete cluster --quiet --name kleidi-vault
 # vault auth enable kubernetes
 
 # echo -e "  -> Exporting token, cert, and k8s cluster info"
-# TOKEN=$(kubectl get secret -n kube-system kleidi-vault-auth -o go-template='{{ .data.token }}' | base64 --decode)
-# CERT=$(kubectl get cm kube-root-ca.crt -o jsonpath="{['data']['ca\.crt']}")
-# K8SHOST=$(kubectl config view --raw --minify --flatten --output 'jsonpath={.clusters[].cluster.server}')
+# export TOKEN=$(kubectl get secret -n kube-system kleidi-vault-auth -o go-template='{{ .data.token }}' | base64 --decode)
+# export CERT=$(kubectl get cm kube-root-ca.crt -o jsonpath="{['data']['ca\.crt']}")
+# export K8SHOST=$(kubectl config view --raw --minify --flatten --output 'jsonpath={.clusters[].cluster.server}')
 
 # echo -e "  -> Write vault config for kubernetes authentication"
 # vault write auth/kubernetes/config token_reviewer_jwt="${TOKEN}" kubernetes_host="${K8SHOST}" kubernetes_ca_cert="${CERT}"

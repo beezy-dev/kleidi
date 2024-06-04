@@ -22,7 +22,7 @@ spec:
           memory: 256Mi
       volumeMounts:
         - name: token
-          mountPath: /var/run/secrets/kubernetes.io/serviceaccount/token
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount/
         - name: sock
           mountPath: /tmp/kleidi
         - name: kleidi-config
