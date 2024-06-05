@@ -47,9 +47,9 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
-	// log.Println("--------------------------------------------------------------------------------------------------")
-	// log.Println("DEBUG: json.Unmarshal output from configFile:", vaultService.Address, vaultService.Namespace, vaultService.Transitkey, vaultService.Vaultrole)
-	// log.Println("--------------------------------------------------------------------------------------------------")
+	log.Println("--------------------------------------------------------------------------------------------------")
+	log.Println("DEBUG: json.Unmarshal output from configFile:", vaultService.Address, vaultService.Namespace, vaultService.Transitkey, vaultService.Vaultrole)
+	log.Println("--------------------------------------------------------------------------------------------------")
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
