@@ -49,9 +49,6 @@ func NewVaultClientRemoteService(configFilePath string) (service.Service, error)
 	vaultconfig.Address = vaultService.Address
 
 	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
-	vaultService = &hvaultRemoteService{
-		keypath: keypath,
-	}
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
