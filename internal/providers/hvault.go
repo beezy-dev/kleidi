@@ -83,7 +83,7 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 
 	key, err := client.Logical().Read(keypath)
 	if err != nil {
-		log.Fatalln("EXIT: unable to find transit key with error:", err.Error())
+		log.Fatalln("EXIT: unable to find transit key in:", keypath, "with error:", err.Error())
 	}
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
