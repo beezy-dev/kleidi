@@ -33,10 +33,10 @@ type hvaultRemoteService struct {
 func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
-		log.Fatalln("EXIT: failed to read vault config file with error:", err.Error())
+		log.Fatalln("EXIT:ctx: failed to read vault config file with error:", err.Error())
 	}
 	if len(keyID) == 0 {
-		log.Fatalln("EXIT: invalid keyID")
+		log.Fatalln("EXIT:keyID len: invalid keyID")
 	}
 
 	vaultService := &hvaultRemoteService{
@@ -53,7 +53,7 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
-		log.Fatalln("EXIT: failed to initialize Vault client with error:", err.Error())
+		log.Fatalln("EXIT:client: failed to initialize Vault client with error:", err.Error())
 	}
 
 	k8sAuth, err := auth.NewKubernetesAuth(
@@ -61,15 +61,15 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 	)
 
 	if err != nil {
-		log.Fatalln("EXIT: unable to initialize Kubernetes auth method with error:", err.Error())
+		log.Fatalln("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:", err.Error())
 	}
 
 	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)
 	if err != nil {
-		log.Fatalln("EXIT: unable to log in with Kubernetes auth with error:", err.Error())
+		log.Fatalln("EXIT:authInfo: unable to log in with Kubernetes auth with error:", err.Error())
 	}
 	if authInfo == nil {
-		log.Fatalln("EXIT: no kubernetes auth info was returned after login")
+		log.Fatalln("EXIT:authInfo: no kubernetes auth info was returned after login")
 	}
 
 	vaultService = &hvaultRemoteService{
@@ -83,7 +83,7 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 
 	key, err := client.Logical().Read(keypath)
 	if err != nil {
-		log.Fatalln("EXIT: unable to find transit key in:", keypath, "with error:", err.Error())
+		log.Fatalln("EXIT:key: unable to find transit key in:", keypath, "with error:", err.Error())
 	}
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
@@ -105,14 +105,14 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 	encrypt, err := s.Logical().WriteWithContext(ctx, keypath, encodepayload)
 	if err != nil {
-		log.Fatalln("EXIT: with error:", err.Error())
+		log.Fatalln("EXIT:encrypt: with error:", err.Error())
 	}
 	enresult, ok := encrypt.Data["ciphertext"].(string)
 	if !ok {
 		// log.Println("--------------------------------------------------------------------------------------------------")
 		// log.Println("DEBUG: encrypted payload:", string([]byte(enresult)))
 		// log.Println("--------------------------------------------------------------------------------------------------")
-		log.Fatalln("EXIT: invalid response")
+		log.Fatalln("EXIT:enresult: invalid response")
 	}
 
 	return &service.EncryptResponse{
@@ -147,7 +147,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		// log.Println("--------------------------------------------------------------------------------------------------")
 		// log.Println("DEBUG: encrypted request:", string([]byte(req.Ciphertext)))
 		// log.Println("--------------------------------------------------------------------------------------------------")
-		log.Fatalln("EXIT: with error:", err.Error())
+		log.Fatalln("EXIT:encryptedResponse: with error:", err.Error())
 	}
 
 	response, ok := encryptedResponse.Data["plaintext"].(string)
@@ -155,7 +155,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		// log.Println("--------------------------------------------------------------------------------------------------")
 		// log.Println("DEBUG: decrypted base64 encodeded payload:", encryptedResponse.Data["plaintext"].(string))
 		// log.Println("--------------------------------------------------------------------------------------------------")
-		log.Fatalln("EXIT: invalid response")
+		log.Fatalln("EXIT:response: invalid response")
 	}
 
 	decodepayload, err := base64.StdEncoding.DecodeString(response)
@@ -163,7 +163,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		// log.Println("--------------------------------------------------------------------------------------------------")
 		// log.Println("DEBUG: decrypted base64 decodeded payload:", base64.StdEncoding.DecodeString(response))
 		// log.Println("--------------------------------------------------------------------------------------------------")
-		log.Fatalln("EXIT: with error:", err.Error())
+		log.Fatalln("EXIT:decodepayload: with error:", err.Error())
 	}
 
 	return decodepayload, nil
