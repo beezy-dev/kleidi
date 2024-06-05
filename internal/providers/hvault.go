@@ -125,7 +125,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 	return &service.EncryptResponse{
 		Ciphertext: []byte(enresult),
-		KeyID:      s.keyID,
+		KeyID:      "kleidi-kms-plugin",
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
 		},
@@ -143,7 +143,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
-	if req.KeyID != s.keyID {
+	if req.KeyID != "kleidi-kms-plugin" {
 		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
