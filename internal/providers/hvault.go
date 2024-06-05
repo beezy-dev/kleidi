@@ -97,7 +97,8 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	// log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 	// log.Println("--------------------------------------------------------------------------------------------------")
 
-	keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	// keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	keypath := "transit/keys/kleidi"
 	encodepayload := map[string]interface{}{
 		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
 	}
@@ -135,7 +136,8 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
-	keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	// keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	keypath := "transit/keys/kleidi"
 	encryptedPayload := map[string]interface{}{
 		"ciphertext": string([]byte(req.Ciphertext)),
 	}
