@@ -54,7 +54,7 @@ func startSofthsm(addr, provider, providerConfig string) {
 
 func startHvault(addr, provider, providerConfig string) {
 
-	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, "kleidi-kms-plugin")
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig)
 	if err != nil {
 		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}

@@ -30,7 +30,7 @@ type hvaultRemoteService struct {
 	Namespace  string `json:"Namespace"`
 }
 
-func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service, error) {
+func NewVaultClientRemoteService(configFilePath string) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalln("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
@@ -125,7 +125,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 	return &service.EncryptResponse{
 		Ciphertext: []byte(enresult),
-		KeyID:      "kleidi-kms-plugin",
+		KeyID:      keyID,
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
 		},
@@ -143,7 +143,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
-	if req.KeyID != "kleidi-kms-plugin" {
+	if req.KeyID != keyID {
 		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
@@ -185,6 +185,6 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",
-		KeyID:   "kleidi-kms-plugin",
+		KeyID:   keyID,
 	}, nil
 }
