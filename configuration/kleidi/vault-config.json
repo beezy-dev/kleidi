@@ -1,5 +1,6 @@
 {
-  "tokenLabel": "kleidi-kms-plugin",
-  "pin": "1234",
-  "path": "/usr/lib64/softhsm/libsofthsm.so" 
+  "Namespace": "",
+  "Transitkey": "kleidi",
+  "Vaultrole": "kleidi",
+  "Address": "http://192.168.172.243:8200" 
 }

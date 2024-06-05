@@ -35,7 +35,7 @@ func NewPKCS11RemoteService(configFilePath, keyID string) (service.Service, erro
 	}
 
 	if len(keyID) == 0 {
-		return nil, fmt.Errorf("/!\\ invalid keyID.")
+		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
 	remoteService := &pkcs11RemoteService{
@@ -48,7 +48,7 @@ func NewPKCS11RemoteService(configFilePath, keyID string) (service.Service, erro
 	}
 
 	if key == nil {
-		return nil, fmt.Errorf("/!\\ key not found.")
+		return nil, fmt.Errorf("/!\\ key not found")
 	}
 
 	if remoteService.aead, err = key.NewGCM(); err != nil {
@@ -68,7 +68,7 @@ func (s *pkcs11RemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}
 
 	if n != nonceSize {
-		return nil, fmt.Errorf("/!\\ unable to read sufficient random bytes.")
+		return nil, fmt.Errorf("/!\\ unable to read sufficient random bytes")
 	}
 
 	cipherText := s.aead.Seal(result[nonceSize:nonceSize], result[:nonceSize], plaintext, []byte(s.keyID))
@@ -85,22 +85,22 @@ func (s *pkcs11RemoteService) Encrypt(ctx context.Context, uid string, plaintext
 func (s *pkcs11RemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
 
 	if len(req.Annotations) != 1 {
-		return nil, fmt.Errorf("/!\\ invalid annotations.")
+		return nil, fmt.Errorf("/!\\ invalid annotations")
 	}
 
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
-		return nil, fmt.Errorf("/!\\ invalid version in annotations.")
+		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
 
 	if req.KeyID != s.keyID {
-		return nil, fmt.Errorf("/!\\ invalid keyID.")
+		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
 	nonceSize := s.aead.NonceSize()
 
 	data := req.Ciphertext
 	if len(data) < nonceSize {
-		return nil, fmt.Errorf("/!\\ stored data was shorter than the required size.")
+		return nil, fmt.Errorf("/!\\ stored data was shorter than the required size")
 	}
 
 	return s.aead.Open(nil, data[:nonceSize], data[nonceSize:], []byte(s.keyID))

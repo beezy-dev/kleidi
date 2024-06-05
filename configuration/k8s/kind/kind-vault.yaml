@@ -9,10 +9,6 @@ nodes:
       hostPath: configuration/k8s/encryption/vault-encryption-config.yaml
       readOnly: true
       propagation: None 
-    - containerPath: /etc/kubernetes/manifests/kleidi-kms.yaml
-      hostPath: configuration/k8s/deploy/vault-pod-kleidi-kms.yaml
-      readOnly: true
-      propagation: None
     - containerPath: /opt/kleidi/config.json
       hostPath: configuration/kleidi/vault-config.json
       readOnly: true
@@ -44,5 +40,3 @@ nodes:
           v: "5"
       controllerManager:
           v: "5"
-- role: worker
-  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245

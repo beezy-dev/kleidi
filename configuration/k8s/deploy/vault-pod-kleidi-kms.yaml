@@ -8,10 +8,11 @@ metadata:
     tier: control-plane
     component: kleidi-kms-plugin
 spec:
+  serviceAccount: kleidi-vault-auth
   hostNetwork: true
   containers:
     - name: kleidi-kms-plugin
-      image: ghcr.io/beezy-dev/kleidi-kms-plugin:latest
+      image: ghcr.io/beezy-dev/kleidi-kms-plugin:vault-1283a8e
       imagePullPolicy: Always
       args:
         - -provider=hvault
@@ -20,11 +21,20 @@ spec:
           cpu: 300m
           memory: 256Mi
       volumeMounts:
+        - name: token
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount/
         - name: sock
           mountPath: /tmp/kleidi
         - name: kleidi-config
           mountPath: /opt/kleidi/config.json
   volumes:
+    - name: token
+      projected:
+        sources:
+        - serviceAccountToken:
+            path: token
+            expirationSeconds: 7200
+            audience: vault
     - name: sock
       hostPath:
         path: /tmp/kleidi
