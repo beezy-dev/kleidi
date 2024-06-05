@@ -174,6 +174,6 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",
-		KeyID:   s.keyID,
+		KeyID:   "kleidi-kms-plugin",
 	}, nil
 }
