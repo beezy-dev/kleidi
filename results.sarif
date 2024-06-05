@@ -12,13 +12,13 @@
 								},
 								"region": {
 									"endColumn": 14,
-									"endLine": 34,
+									"endLine": 35,
 									"snippet": {
 										"text": "ctx, err := os.ReadFile(configFilePath)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 14,
-									"startLine": 34
+									"startLine": 35
 								}
 							}
 						}
@@ -38,13 +38,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 46,
+									"endLine": 47,
 									"snippet": {
 										"text": "json.Unmarshal(([]byte(ctx)), \u0026vaultService)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 46
+									"startLine": 47
 								}
 							}
 						}

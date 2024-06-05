@@ -24,6 +24,7 @@ type hvaultRemoteService struct {
 	*api.Client
 
 	keyID      string
+	keypath    string
 	Address    string `json:"Address"`
 	Transitkey string `json:"Transitkey"`
 	Vaultrole  string `json:"Vaultrole"`
@@ -46,6 +47,11 @@ func NewVaultClientRemoteService(configFilePath string) (service.Service, error)
 	json.Unmarshal(([]byte(ctx)), &vaultService)
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
+
+	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	vaultService = &hvaultRemoteService{
+		keypath: keypath,
+	}
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
@@ -80,8 +86,8 @@ func NewVaultClientRemoteService(configFilePath string) (service.Service, error)
 
 	client.SetNamespace(vaultService.Namespace)
 
-	//keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
-	keypath := "transit/keys/kleidi"
+	// //keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	// keypath := "transit/keys/kleidi"
 
 	key, err := client.Logical().Read(keypath)
 	if err != nil {
@@ -102,16 +108,16 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	// log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 	// log.Println("--------------------------------------------------------------------------------------------------")
 
-	// keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
-	keypath := "transit/encrypt/kleidi"
+	// // keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	// keypath := "transit/encrypt/kleidi"
 	encodepayload := map[string]interface{}{
 		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
 	}
 
-	encrypt, err := s.Logical().WriteWithContext(ctx, keypath, encodepayload)
+	encrypt, err := s.Logical().WriteWithContext(ctx, s.keypath, encodepayload)
 	if err != nil {
 		log.Println("--------------------------------------------------------")
-		log.Println("DEBUG:encrypt:", "\nplaintext:", string([]byte(plaintext)), "\nkeypath:", keypath, "\nencodepayload:", encodepayload)
+		log.Println("DEBUG:encrypt:", "\nplaintext:", string([]byte(plaintext)), "\nkeypath:", s.keypath, "\nencodepayload:", encodepayload)
 		log.Println("--------------------------------------------------------")
 		log.Fatalln("EXIT:encrypt: with error:\n", err.Error())
 	}
@@ -147,16 +153,16 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
-	// keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
-	keypath := "transit/decrypt/kleidi"
+	// // keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
+	// keypath := "transit/decrypt/kleidi"
 	encryptedPayload := map[string]interface{}{
 		"ciphertext": string([]byte(req.Ciphertext)),
 	}
 
-	encryptedResponse, err := s.Logical().WriteWithContext(ctx, keypath, encryptedPayload)
+	encryptedResponse, err := s.Logical().WriteWithContext(ctx, s.keypath, encryptedPayload)
 	if err != nil {
 		log.Println("--------------------------------------------------------")
-		log.Println("DEBUG:encryptedResponse:", "\nkeypath:", keypath, "\nenresult:", encryptedPayload)
+		log.Println("DEBUG:encryptedResponse:", "\nkeypath:", s.keypath, "\nenresult:", encryptedPayload)
 		log.Println("--------------------------------------------------------")
 		log.Fatalln("EXIT:encryptedResponse: with error:", err.Error())
 	}
