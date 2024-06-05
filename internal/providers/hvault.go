@@ -78,8 +78,8 @@ func NewVaultClientRemoteService(configFilePath, keyID string) (service.Service,
 
 	client.SetNamespace(vaultService.Namespace)
 
-	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
-	// keypath:= fmt.Sprintf("transit/keys/kleidii")
+	//keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	keypath := "transit/keys/kleidi"
 
 	key, err := client.Logical().Read(keypath)
 	if err != nil {
