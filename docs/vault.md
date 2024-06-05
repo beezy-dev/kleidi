@@ -1,4 +1,4 @@
-# HashiCorp Vault/OpenBao Implementation
+# HashiCorp Vault Implementation
 
 ## Vault Deployment
 
