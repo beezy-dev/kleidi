@@ -20,7 +20,7 @@ All data fields are encoded in base64 but not encrypted.
 
 The following diagram takes a 10,000-feet overview to explore the security exposures leading to a potential secret leaking/spilling: 
 
-![kleidi security exposures](docs/images/kledi-security_exposure.drawio.png)
+![kleidi security exposures](images/kledi-security_exposure.drawio.png)
 
 * The secret comes from an external source and needs to be injected.  
 * The base64 encoded secret will be ingested via the API server. 

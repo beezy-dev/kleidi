@@ -21,7 +21,7 @@ With successful ```initContainer```, the ```kleidi-kms-plugin``` container start
 * ```/var/lib(64)/softhsm/``` to access the token 
 * ```/tmp/kleidi``` to create the gRPC socket 
 
-![kleidiv0.1](docs/images/kleidiv0.1.drawio.png)
+![kleidiv0.1](images/kleidiv0.1.drawio.png)
 
 ## Why 1.29 or later?
 ***Stability!***   
