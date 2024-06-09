@@ -33,7 +33,7 @@ Development mode should NOT be used in production installations!
 
 Then export the Vault address (if not, it will default and fail on HTTPS):
 ```
-export VAULT_ADDR="http://<your_ip>:8200"
+export VAULT_ADDR="http://0.0.0.0:8200"
 export VAULT_TOKEN="kleidi-demo"
 export VAULT_SKIP_VERIFY="true"
 ```
@@ -469,7 +469,7 @@ Expected output:
 Then let's encrypt the pre-deployment secret too:
 
 ```
-kubectl get secret prekleidi-secret -o json | /home/linuxbrew/.linuxbrew/bin/kubectl replace -f -
+kubectl get secret prekleidi-secret -o json | kubectl replace -f -
 ``` 
 Expected output:
 ```

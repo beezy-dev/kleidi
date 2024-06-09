@@ -5,4 +5,9 @@ resources:
       - secrets
       - configmaps
     providers: 
+      - kms:
+          apiVersion: v2
+          name: kleidi-kms-plugin
+          endpoint: unix:///tmp/kleidi/kleidi-kms-plugin.socket
+          timeout: 5s    
       - identity: {}
