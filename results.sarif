@@ -38,13 +38,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 47,
+									"endLine": 53,
 									"snippet": {
 										"text": "json.Unmarshal(([]byte(ctx)), \u0026vaultService)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 47
+									"startLine": 53
 								}
 							}
 						}

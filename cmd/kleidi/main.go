@@ -20,9 +20,10 @@ func main() {
 
 	// Generic vars considering the consistency across providers.
 	var (
-		listenAddr         = flag.String("listen", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address.")
-		providerService    = flag.String("provider", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm).")
-		providerConfigFile = flag.String("configfile", "/opt/kleidi/config.json", "Provider config file pat.")
+		listenAddr         = flag.String("listen", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address")
+		providerService    = flag.String("provider", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm)")
+		providerConfigFile = flag.String("configfile", "/opt/kleidi/config.json", "Provider config file pat")
+		debugMode          = flag.Bool("debugmode", false, "Enable debug mode")
 	)
 
 	// Parsing environment variables.
@@ -57,9 +58,11 @@ func main() {
 		log.Fatalln("EXIT: flag -configfile set to", providerConfig, "failed with error:\n", err.Error())
 	}
 
+	debug := *debugMode
+
 	//Starting the appropriate provider once previously validated.
 	//REFACTOR to a simple interface
 
-	utils.StartProvider(addr, provider, providerConfig)
+	utils.StartProvider(addr, provider, providerConfig, debug)
 
 }

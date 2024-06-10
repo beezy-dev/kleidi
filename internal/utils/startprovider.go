@@ -16,19 +16,23 @@ const (
 	socketTimeOut = 10 * time.Second
 )
 
-func StartProvider(addr, provider, providerConfig string) {
+func StartProvider(addr, provider, providerConfig string, debug bool) {
 
 	switch provider {
 	case "softhsm":
-		startSofthsm(addr, provider, providerConfig)
+		startSofthsm(addr, provider, providerConfig, debug)
 	case "hvault":
-		startHvault(addr, provider, providerConfig)
+		startHvault(addr, provider, providerConfig, debug)
 	case "tpm":
-		startTpm(addr, provider, providerConfig)
+		startTpm(addr, provider, providerConfig, debug)
 	}
 }
 
-func startSofthsm(addr, provider, providerConfig string) {
+func startSofthsm(addr, provider, providerConfig string, debug bool) {
+
+	if debug {
+		log.Println("test")
+	}
 
 	remoteKMSService, err := providers.NewPKCS11RemoteService(providerConfig, "kleidi-kms-plugin")
 	if err != nil {
@@ -52,9 +56,9 @@ func startSofthsm(addr, provider, providerConfig string) {
 	grpcService.Shutdown()
 }
 
-func startHvault(addr, provider, providerConfig string) {
+func startHvault(addr, provider, providerConfig string, debug bool) {
 
-	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig)
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, debug)
 	if err != nil {
 		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}
@@ -76,7 +80,11 @@ func startHvault(addr, provider, providerConfig string) {
 
 }
 
-func startTpm(addr, provider, providerConfig string) {
+func startTpm(addr, provider, providerConfig string, debug bool) {
+
+	if debug {
+		log.Println("test")
+	}
 
 	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
 	providers.TmpPlaceholder()
