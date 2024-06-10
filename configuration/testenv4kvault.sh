@@ -123,11 +123,7 @@ echo
 echo -e "  -> Trigger Kind k8s API server restart"
 kubectl delete -n kube-system pod/kube-apiserver-kleidi-vault-control-plane
 echo -e "  -> Sleeping for 10 seconds to allow kube-apiserver to restart"
-sleep 10
-
-echo
-echo -e "  -> Creating a post kleidi deployment Secret"
-kubectl create secret generic postkleidi -n default --from-literal=mykey=mydata
+sleep 30
 
 echo 
 echo -e "  -> Checking a pre kleidi deployment Secret"
@@ -139,6 +135,10 @@ then
 else 
     echo -e "  /!\ no unencrypted prekleidi Secret object found!"
 fi 
+
+echo
+echo -e "  -> Creating a post kleidi deployment Secret"
+kubectl create secret generic postkleidi -n default --from-literal=mykey=mydata
 
 echo 
 echo -e "  -> Checking a post kleidi deployment Secret"
@@ -166,15 +166,15 @@ else
     echo -e "  /!\ no encrypted prekleidi Secret object found!"
 fi 
 
-echo
-echo -e "  -> Cleaning any existing vault test env"
-killall -9 vault ||true
+# echo
+# echo -e "  -> Cleaning any existing vault test env"
+# killall -9 vault ||true
 
-echo
-echo -e "  -> Cleaning any existing kind test env" 
-kind delete cluster --name kleidi-vault
+# echo
+# echo -e "  -> Cleaning any existing kind test env" 
+# kind delete cluster --name kleidi-vault
 
-echo
-echo -e "  -> Cleaning vault-encryption-config.yaml"
-cp k8s/encryption/vault-encryption-config-bkp.yaml k8s/encryption/vault-encryption-config.yaml
+# echo
+# echo -e "  -> Cleaning vault-encryption-config.yaml"
+# cp k8s/encryption/vault-encryption-config-bkp.yaml k8s/encryption/vault-encryption-config.yaml
 
