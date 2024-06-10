@@ -23,8 +23,8 @@ var _ service.Service = &hvaultRemoteService{}
 type hvaultRemoteService struct {
 	*api.Client
 
-	keyID      string
-	debug      bool
+	// keyID      string
+	debugMode  bool
 	Address    string `json:"Address"`
 	Transitkey string `json:"Transitkey"`
 	Vaultrole  string `json:"Vaultrole"`
@@ -46,8 +46,8 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	}
 
 	vaultService := &hvaultRemoteService{
-		keyID: keyID,
-		debug: debug,
+		// keyID: keyID,
+		debugMode: debug,
 	}
 
 	json.Unmarshal(([]byte(ctx)), &vaultService)
@@ -58,7 +58,9 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 	if debug {
 		log.Println("DEBUG:--------------------------------------------------")
-		log.Println("DEBUG: unmarshal JSON values:", "\n                    -> vaultService.Address:", vaultService.Address, "\n                    -> vaultService.Transitkey:", vaultService.Transitkey, "\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole, "\n                    -> vaultService.Namespace:", vaultService.Namespace, "\n                    -> keypath:", keypath)
+		log.Println("DEBUG: unmarshal JSON values:",
+			"\n                    -> vaultService.debugMode", vaultService.debugMode,
+			"\n                    -> vaultService.Address:", vaultService.Address, "\n                    -> vaultService.Transitkey:", vaultService.Transitkey, "\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole, "\n                    -> vaultService.Namespace:", vaultService.Namespace, "\n                    -> keypath:", keypath)
 	}
 
 	client, err := api.NewClient(vaultconfig)
