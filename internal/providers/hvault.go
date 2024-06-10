@@ -23,12 +23,12 @@ var _ service.Service = &hvaultRemoteService{}
 type hvaultRemoteService struct {
 	*api.Client
 
-	keyID      string
-	debug      bool
-	Address    string `json:"Address"`
-	Transitkey string `json:"Transitkey"`
-	Vaultrole  string `json:"Vaultrole"`
-	Namespace  string `json:"Namespace"`
+	// keyID      string
+	Debug      bool
+	Namespace  string `json:"namespace"`
+	Transitkey string `json:"transitkey"`
+	Vaultrole  string `json:"vaultrole"`
+	Address    string `json:"address"`
 }
 
 func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Service, error) {
@@ -45,12 +45,15 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Println("DEBUG: verifying keyID:", keyID)
 	}
 
-	vaultService := &hvaultRemoteService{
-		keyID: keyID,
-		debug: debug,
-	}
+	// vaultService := &hvaultRemoteService{
+	// 	// keyID: keyID,
+	// 	Debug: debug,
+	// }
 
+	vaultService := &hvaultRemoteService{}
+	vaultService.Debug = debug
 	json.Unmarshal(([]byte(ctx)), &vaultService)
+
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
@@ -58,7 +61,13 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 	if debug {
 		log.Println("DEBUG:--------------------------------------------------")
-		log.Println("DEBUG: unmarshal JSON values:", "\n                    -> vaultService.Address:", vaultService.Address, "\n                    -> vaultService.Trasitkey:", vaultService.Transitkey, "\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole, "\n                    -> vaultService.Namespace:", vaultService.Namespace, "\n                    -> keypath:", keypath)
+		log.Println("DEBUG: unmarshal JSON values:",
+			"\n                    -> vaultService.debug", vaultService.Debug,
+			"\n                    -> vaultService.Address:", vaultService.Address,
+			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
+			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
+			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
+			"\n                    -> keypath:", keypath)
 	}
 
 	client, err := api.NewClient(vaultconfig)
@@ -92,9 +101,10 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Fatalln("EXIT:authInfo: no kubernetes auth info was returned after login")
 	}
 
-	vaultService = &hvaultRemoteService{
-		Client: client,
-	}
+	// vaultService = &hvaultRemoteService{
+	// 	Client: client,
+	// }
+	vaultService.Client = client
 
 	client.SetNamespace(vaultService.Namespace)
 
@@ -115,11 +125,19 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
-	if s.debug {
+	if s.Debug {
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 		log.Println("DEBUG:--------------------------------------------------")
 	}
+
+	log.Println("DEBUG:--------------------------------------------------")
+	log.Println("DEBUG: unmarshal JSON values:",
+		"\n                    -> vaultService.debug", s.Debug,
+		"\n                    -> vaultService.Address:", s.Address,
+		"\n                    -> vaultService.Transitkey:", s.Transitkey,
+		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
+		"\n                    -> vaultService.Namespace:", s.Namespace)
 
 	enckeypath := fmt.Sprintf("transit/encrypt/%s", s.Transitkey)
 	// keypath := "transit/encrypt/kleidi"
@@ -130,7 +148,11 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
 	if err != nil {
 		log.Println("--------------------------------------------------------")
-		log.Println("DEBUG:encrypt:", "\nplaintext:", string([]byte(plaintext)), "\nkeypath:", enckeypath, "\nencodepayload:", encodepayload)
+		log.Println("DEBUG:encrypt:",
+			"\n debug:", s.Debug,
+			"\nplaintext:", string([]byte(plaintext)),
+			"\nkeypath:", enckeypath,
+			"\nencodepayload:", encodepayload)
 		log.Println("--------------------------------------------------------")
 		log.Fatalln("EXIT:encrypt: with error:\n", err.Error())
 	}

@@ -66,8 +66,9 @@ fi
 echo -ne ".OK (${NODEVERSION})\n"
 
 echo
-echo -e "  -> Creating a pre kleidi deployment Secret"
-kubectl create secret generic prekleidi -n default --from-literal=mykey=mydata
+echo -e "  -> Creating 990 pre kleidi deployment Secrets"
+# kubectl create secret generic prekleidi -n default --from-literal=mykey=mydata
+for i in {10..1000}; do kubectl create secret generic prekleidi$i --from-literal=mykey=mydata; done
 
 echo
 echo -e "  -> Creating kleidi k8s ServiceAccount/SA Secret/RBAC"
@@ -122,59 +123,74 @@ cp k8s/encryption/vault-encryption-config-with_kms.yaml k8s/encryption/vault-enc
 echo
 echo -e "  -> Trigger Kind k8s API server restart"
 kubectl delete -n kube-system pod/kube-apiserver-kleidi-vault-control-plane
-echo -e "  -> Sleeping for 10 seconds to allow kube-apiserver to restart"
-sleep 30
+echo -e "  -> Sleeping for 30 seconds to allow kube-apiserver to restart"
 
-echo 
-echo -e "  -> Checking a pre kleidi deployment Secret"
+# echo 
+# echo -e "  -> Checking a pre kleidi deployment Secret"
 # kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C
 
-if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C | grep mydata;
-then 
-    echo -e "  unencrypted prekleidi Secret object found :)" 
-else 
-    echo -e "  /!\ no unencrypted prekleidi Secret object found!"
-fi 
+# if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C | grep mydata;
+# then 
+#     echo -e "  unencrypted prekleidi Secret object found :)" 
+# else 
+#     echo -e "  /!\ no unencrypted prekleidi Secret object found!"
+# fi 
+
+rvho
+echo -e "  -> Checking a pre kleidi deployment Secret"
+for i in {10..1000}; do kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi$i" | hexdump -C | grep Opaque; done | wc -l
 
 echo
-echo -e "  -> Creating a post kleidi deployment Secret"
-kubectl create secret generic postkleidi -n default --from-literal=mykey=mydata
+echo -e "  -> Creating 990 post kleidi deployment Secrets"
+# kubectl create secret generic postkleidi -n default --from-literal=mykey=mydata
+for i in {10..1000}; do kubectl create secret generic postkleidi$i --from-literal=mykey=mydata; done
+
+# echo 
+# echo -e "  -> Checking a post kleidi deployment Secret"
+# kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/postkleidi" | hexdump -C
+
+# if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/postkleidi" | hexdump -C | grep kms;
+
+# then 
+#     echo -e "  encrypted postkleidi Secret object found :)" 
+# else 
+#     echo -e "  /!\ no encrypted postkleidi Secret object found!"
+#     exit
+# fi 
 
 echo 
 echo -e "  -> Checking a post kleidi deployment Secret"
-# kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/postkleidi" | hexdump -C
-
-if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/postkleidi" | hexdump -C | grep kms;
-then 
-    echo -e "  encrypted postkleidi Secret object found :)" 
-else 
-    echo -e "  /!\ no encrypted postkleidi Secret object found!"
-    exit
-fi 
+for i in {10..1000}; do kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/postkleidi$i" | hexdump -C | grep vault; done | wc -l
 
 echo 
 echo -e "  -> Performing replace of prekleidi"
-kubectl get secret prekleidi -o json | kubectl replace -f -
+# kubectl get secret prekleidi -o json | kubectl replace -f -
+for i in {10..1000}; do kubectl get secret prekleidi$i -o json | kubectl replace -f -; done
 
-echo -e "  -> Checking a pre kleidi Secret replace"
+
+# echo -e "  -> Checking a pre kleidi Secret replace"
 # kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C
  
-if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C |grep kms;
-then 
-    echo -e "  encrypted prekleidi Secret object found :)" 
-else 
-    echo -e "  /!\ no encrypted prekleidi Secret object found!"
-fi 
+# if kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi" | hexdump -C |grep kms;
+# then 
+#     echo -e "  encrypted prekleidi Secret object found :)" 
+# else 
+#     echo -e "  /!\ no encrypted prekleidi Secret object found!"
+# fi 
 
-# echo
-# echo -e "  -> Cleaning any existing vault test env"
-# killall -9 vault ||true
+echo
+echo -e "  -> Checking a pre kleidi Secret replace"
+for i in {10..1000}; do kubectl -n kube-system exec etcd-kleidi-vault-control-plane -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/etc/kubernetes/pki/etcd/ca.crt' ETCDCTL_CERT='/etc/kubernetes/pki/etcd/server.crt' ETCDCTL_KEY='/etc/kubernetes/pki/etcd/server.key' ETCDCTL_API=3 etcdctl get /registry/secrets/default/prekleidi$i" | hexdump -C | grep vault; done | wc -l
 
-# echo
-# echo -e "  -> Cleaning any existing kind test env" 
-# kind delete cluster --name kleidi-vault
+echo
+echo -e "  -> Cleaning any existing vault test env"
+killall -9 vault ||true
 
-# echo
-# echo -e "  -> Cleaning vault-encryption-config.yaml"
-# cp k8s/encryption/vault-encryption-config-bkp.yaml k8s/encryption/vault-encryption-config.yaml
+echo
+echo -e "  -> Cleaning any existing kind test env" 
+kind delete cluster --name kleidi-vault
+
+echo
+echo -e "  -> Cleaning vault-encryption-config.yaml"
+cp k8s/encryption/vault-encryption-config-bkp.yaml k8s/encryption/vault-encryption-config.yaml
 

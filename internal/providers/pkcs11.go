@@ -16,10 +16,6 @@ import (
 	"k8s.io/kms/pkg/service"
 )
 
-const (
-	annotationKey = "v2.kleidi.beezy.dev"
-)
-
 var _ service.Service = &pkcs11RemoteService{}
 
 type pkcs11RemoteService struct {
