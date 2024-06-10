@@ -18,17 +18,17 @@ import (
 	"k8s.io/kms/pkg/service"
 )
 
-var _ service.Service = &HvaultRemoteService{}
+var _ service.Service = &hvaultRemoteService{}
 
-type HvaultRemoteService struct {
+type hvaultRemoteService struct {
 	*api.Client
 
 	// keyID      string
-	debugMode  bool
-	Address    string `json:"Address"`
-	Transitkey string `json:"Transitkey"`
-	Vaultrole  string `json:"Vaultrole"`
-	Namespace  string `json:"Namespace"`
+	Debug      bool
+	Namespace  string `json:"namespace"`
+	Transitkey string `json:"transitkey"`
+	Vaultrole  string `json:"vaultrole"`
+	Address    string `json:"address"`
 }
 
 func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Service, error) {
@@ -45,12 +45,15 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Println("DEBUG: verifying keyID:", keyID)
 	}
 
-	vaultService := &HvaultRemoteService{
-		// keyID: keyID,
-		debugMode: debug,
-	}
+	// vaultService := &hvaultRemoteService{
+	// 	// keyID: keyID,
+	// 	Debug: debug,
+	// }
 
+	vaultService := &hvaultRemoteService{}
+	vaultService.Debug = debug
 	json.Unmarshal(([]byte(ctx)), &vaultService)
+
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
@@ -59,7 +62,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	if debug {
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unmarshal JSON values:",
-			"\n                    -> vaultService.debugMode", vaultService.debugMode,
+			"\n                    -> vaultService.debug", vaultService.Debug,
 			"\n                    -> vaultService.Address:", vaultService.Address,
 			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
 			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
@@ -98,9 +101,10 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Fatalln("EXIT:authInfo: no kubernetes auth info was returned after login")
 	}
 
-	vaultService = &HvaultRemoteService{
-		Client: client,
-	}
+	// vaultService = &hvaultRemoteService{
+	// 	Client: client,
+	// }
+	vaultService.Client = client
 
 	client.SetNamespace(vaultService.Namespace)
 
@@ -119,9 +123,9 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	return vaultService, nil
 }
 
-func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
+func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
-	if s.debugMode {
+	if s.Debug {
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 		log.Println("DEBUG:--------------------------------------------------")
@@ -129,7 +133,7 @@ func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 	log.Println("DEBUG:--------------------------------------------------")
 	log.Println("DEBUG: unmarshal JSON values:",
-		"\n                    -> vaultService.debugMode", s.debugMode,
+		"\n                    -> vaultService.debug", s.Debug,
 		"\n                    -> vaultService.Address:", s.Address,
 		"\n                    -> vaultService.Transitkey:", s.Transitkey,
 		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
@@ -145,7 +149,7 @@ func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	if err != nil {
 		log.Println("--------------------------------------------------------")
 		log.Println("DEBUG:encrypt:",
-			"\n debugmode:", s.debugMode,
+			"\n debug:", s.Debug,
 			"\nplaintext:", string([]byte(plaintext)),
 			"\nkeypath:", enckeypath,
 			"\nencodepayload:", encodepayload)
@@ -169,7 +173,7 @@ func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}, nil
 }
 
-func (s *HvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
 
 	if len(req.Annotations) != 1 {
 		log.Println("--------------------------------------------------------")
@@ -219,7 +223,7 @@ func (s *HvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 
 }
 
-func (s *HvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
+func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",

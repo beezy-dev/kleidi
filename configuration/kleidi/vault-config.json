@@ -1,6 +1,6 @@
 {
-  "Namespace": "",
-  "Transitkey": "kleidi",
-  "Vaultrole": "kleidi",
-  "Address": "http://10.89.0.1:8200" 
+  "namespace": "",
+  "transitkey": "kleidi",
+  "vaultrole": "kleidi",
+  "address": "http://10.89.0.1:8200" 
 }
