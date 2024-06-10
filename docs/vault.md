@@ -1,6 +1,23 @@
 # HashiCorp Vault Implementation
 
-## Vault Deployment
+## Automated deployment
+
+The folder ```scripts/prd/vault``` includes a script ```env4vault.sh``` deploys:
+- a HashiCorp Vault dev instance
+- a Kind instance running Kubernetes v1.29.2 
+- the HashiCorp Vault kleidi and Kubernetes Auth configuration 
+- a kleidi-kms-plugin pod connecting
+- a kube-api restart with the ```encryption-config.yaml```configuration 
+- a series of Secrets test to validate the configuration
+
+This requires to have the following install:
+- HashiCorp Vault CLI 
+- Kind
+- kubectl 
+
+***Depending on the Linux distro and container run time, the safe bet is to run the script in sudo/root mode. The main root cause is related the container to host communication that might be denied.***
+
+## Manual deployment
 
 This implementation includes the initialization of an external HashiCorp Vault with a Transit Key Engine.     
 Download the HashiCorp Vault binary or install it with ```brew```, then run the following command:
