@@ -60,7 +60,11 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unmarshal JSON values:",
 			"\n                    -> vaultService.debugMode", vaultService.debugMode,
-			"\n                    -> vaultService.Address:", vaultService.Address, "\n                    -> vaultService.Transitkey:", vaultService.Transitkey, "\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole, "\n                    -> vaultService.Namespace:", vaultService.Namespace, "\n                    -> keypath:", keypath)
+			"\n                    -> vaultService.Address:", vaultService.Address,
+			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
+			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
+			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
+			"\n                    -> keypath:", keypath)
 	}
 
 	client, err := api.NewClient(vaultconfig)
@@ -122,6 +126,14 @@ func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 		log.Println("DEBUG:--------------------------------------------------")
 	}
+
+	log.Println("DEBUG:--------------------------------------------------")
+	log.Println("DEBUG: unmarshal JSON values:",
+		"\n                    -> vaultService.debugMode", s.debugMode,
+		"\n                    -> vaultService.Address:", s.Address,
+		"\n                    -> vaultService.Transitkey:", s.Transitkey,
+		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
+		"\n                    -> vaultService.Namespace:", s.Namespace)
 
 	enckeypath := fmt.Sprintf("transit/encrypt/%s", s.Transitkey)
 	// keypath := "transit/encrypt/kleidi"
