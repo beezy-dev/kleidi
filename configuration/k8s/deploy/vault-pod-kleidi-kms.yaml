@@ -16,6 +16,7 @@ spec:
       imagePullPolicy: Always
       args:
         - -provider=hvault
+        - -debugmode=true
       resources:
         limits:
           cpu: 300m
