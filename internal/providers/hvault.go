@@ -117,7 +117,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
-	if s.debug {
+	if s.debugMode {
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 		log.Println("DEBUG:--------------------------------------------------")
@@ -133,7 +133,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	if err != nil {
 		log.Println("--------------------------------------------------------")
 		log.Println("DEBUG:encrypt:",
-			"\n debugmode:", s.debug,
+			"\n debugmode:", s.debugMode,
 			"\nplaintext:", string([]byte(plaintext)),
 			"\nkeypath:", enckeypath,
 			"\nencodepayload:", encodepayload)
