@@ -18,9 +18,9 @@ import (
 	"k8s.io/kms/pkg/service"
 )
 
-var _ service.Service = &hvaultRemoteService{}
+var _ service.Service = &HvaultRemoteService{}
 
-type hvaultRemoteService struct {
+type HvaultRemoteService struct {
 	*api.Client
 
 	// keyID      string
@@ -45,7 +45,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Println("DEBUG: verifying keyID:", keyID)
 	}
 
-	vaultService := &hvaultRemoteService{
+	vaultService := &HvaultRemoteService{
 		// keyID: keyID,
 		debugMode: debug,
 	}
@@ -94,7 +94,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 		log.Fatalln("EXIT:authInfo: no kubernetes auth info was returned after login")
 	}
 
-	vaultService = &hvaultRemoteService{
+	vaultService = &HvaultRemoteService{
 		Client: client,
 	}
 
@@ -115,7 +115,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	return vaultService, nil
 }
 
-func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
+func (s *HvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
 	if s.debugMode {
 		log.Println("DEBUG:--------------------------------------------------")
@@ -157,7 +157,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}, nil
 }
 
-func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+func (s *HvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
 
 	if len(req.Annotations) != 1 {
 		log.Println("--------------------------------------------------------")
@@ -207,7 +207,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 
 }
 
-func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
+func (s *HvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",
