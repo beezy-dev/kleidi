@@ -4,7 +4,7 @@
 The traditional credentials handling practices enforce a clear separation of concerns between application and infrastructure teams.   
 However, Kubernetes centralized credentials through the ```secret``` and ```configmap``` API objects within ```etcd``` with an encryption layer. 
 
-More here [Security](docs/security.md) or with [Kubernetes Secrets Handbook](https://www.amazon.com/Kubernetes-Secrets-Handbook-production-grade-management/dp/180512322X)
+More here [Security](docs/exposures.md) or with [Kubernetes Secrets Handbook](https://www.amazon.com/Kubernetes-Secrets-Handbook-production-grade-management/dp/180512322X)
 
 ## How?
 Kubernetes introduces a KMS plugin framework to support access to an external security (hardware or software) module and enable an envelope encryption practice. 
@@ -28,6 +28,18 @@ More here [Implementation](docs/architecture.md)
 * Delinea/Thycotic integration 
 
 
+## Additional collaterals
+
+### Code of Conduct
+We believe in a space for everyone and we embrace the following [code of conduct](docs/code_of_conduct.md).
+
+### Contributing
+The essence of open source is sharing and contributing to knowledge. The guidelines are available [here](docs/contributing.md).
+
+### Security
+We take security and trust seriously. If you believe that you have found a security issue in this project, *please disclose responsibly the details by following the [security policy](docs/security.md). 
+
+
 ## Origin of kleidi
 <img align="right" src="https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png" width="25%">
 
@@ -39,3 +51,4 @@ The origin is Greek, and the meaning is "key". (Source: [Wikipedia](https://en.w
 
 <br clear="left"/>
 <br clear="left"/>
+

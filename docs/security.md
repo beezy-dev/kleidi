@@ -1,43 +1,33 @@
-# kubernetes kms plugin
+# Security
 
-## Physical/Virtual machine world
-The entire IT organization is segmented into knowledge domains such as networking, storage, computing, and applications in the legacy world. 
-When an application team asks for a virtual machine:
-* The VMware Team has its credentials, which the Linux team cannot access.
-* The Linux team will configure, maintain, and support the operating system and not share their credentials with any other team. 
-* The application team will deploy their application, which might be connected to a database; the DBA will provide credentials.   
-This quick overview can be enriched with all other layers like storage, backup, networking, monitoring, etc.
-None will cross-share their credentials.
+## Reporting Potential Security Issues
 
-## Container platform world
-Within Kubernetes, the states and configurations of every component, from computing to networking to applications and more, are stored within the ```etcd``` key-value datastore. 
+If you have encountered a potential security vulnerability in this project,
+please **report it to us at git@beezy.dev and not via an GitHub issue**.  
 
-Even if cloud-native applications can interact directly with a KMS provider like Vault, application and platform credentials are still stored within the cluster. This might also include the token to connect with the KMS provider.
+We will work with you to verify the vulnerability, build a patch, validate  
+the fix, and finally issue a public report. 
 
-All data fields are encoded in base64 but not encrypted. 
+When reporting issues, please provide the following information:
+- Component(s) affected
+- A description indicating how to reproduce the issue
+- A summary of the security vulnerability and impact
 
-## Security exposures
+We request that you contact us via the email address above and give the
+project contributors a chance to resolve the vulnerability and issue a new
+release prior to any public exposure; this helps protect the project's
+users, and provides them with a chance to upgrade and/or update in order to
+protect their applications.
 
-The following diagram takes a 10,000-feet overview to explore the security exposures leading to a potential secret leaking/spilling: 
+## Policy
 
-![kleidi security exposures](images/kledi-security_exposure.drawio.png)
+If we verify a reported security vulnerability, our policy is:
 
-* The secret comes from an external source and needs to be injected.  
-* The base64 encoded secret will be ingested via the API server. 
-* If a Kubernetes KMS provider plugin exists, the API server encrypts the data field using an envelope encryption scheme. 
-* The secret and encrypted data filed will be stored within the ```etcd``` key-value datastore. 
-* The ```etcd``` key-value datastore file is saved on a local volume on the control plane node filesystem. 
+- We will patch the current release branch, as well as the immediate prior minor
+  release branch.
 
-What are the exposures:
+- After patching the release branches, we will immediately issue new security
+  fix releases for each patched release branch.
 
-|Exposure | Risk | Mitigation |
-|---------|------|------------|
-|The secret comes from an external source. It requires a base64-encoded payload. | This transformation is a first-level exposure of the data field at file and console levels. | Work an injection mechanism from the password manager or KMS |  
-| A common mistake is committing the secret YAML definition to a Git repository. | The credentials are exposed for life and will need to be rotated. | Don't include any YAML manifest with sensitive data in a Git repository even for testing purposes. Using a tool like SOPS can help prevent such scenario | 
-| If no KMS provider plugin exists. | The API server stores the base64-encoded secret within the ```etcd``` key-value datastore. | Application secrets might benefit from an external KMS. Platform secrets will require a data encryption at rest option provided by Kubernetes. |
-| If a KMS provider plugin exists. | The encryption Key or credentials to access the KMS or HSM are exposed in clear text. | Set up a mTLS authentication if possible. |
-| The ```etcd``` key-value datastore is stored on the control plane filesystem. | The datastore file can be accessed if the node is compromised. | Encrypting the filesystem helps secure the datastore file from being read, except if the node has been compromised with root access. |
-| The API server is the Kubernetes heart and soul. | If the appropriate RBAC or the API server is compromised, all protective measures will be useless since the API server will decrypt all sensitive data fields. | RBAC and masking the API server if possible | 
-
-Thanks to Red Hat colleagues Francois Duthilleul and Frederic Herrmann for spending time analyzing the gaps.
-
+- A security advisory will be released on the project GitHub repository detailing the
+  vulnerability, as well as recommendations for end-users to protect themselves.
