@@ -5,7 +5,7 @@ Welcome! We are glad that you want to contribute to our project and make it as e
 If this is your first contribution to kleidi, we encourage you to walk through this guideline helping you to setup your dev environment, make a change, test it and open a pull request about it. 
 
 ## Code of Conduct
-The kleidi community is governed by our [Code of Conduct](https://github.com/beezy-dev/kleidi/blob/main/CODE_OF_CONDUCT.md). This includes but isn't limited to: kleidi GitHub repositories, Discussions, interaction on social media, conferences and meetups. 
+The kleidi community is governed by our [Code of Conduct](code_of_conduct.md). This includes but isn't limited to: kleidi GitHub repositories, Discussions, interaction on social media, conferences and meetups. 
 
 ## License
 By contributing, you agree that your contributions will be licensed under its [Apache License 2.0](https://github.com/beezy/kleidi/blob/main/LICENSE).  
@@ -16,7 +16,7 @@ In short, when you submit code changes, your submissions are understood to be un
 We welcome many different types of contributions includings:
 
 * Answering questions on [GitHub Discussions](https://github.com/beezy-dev/kleidi/discussions) 
-* [Documentation](https://github.com/beezy-dev/kleidi/wiki)
+* [Documentation](https://github.com/beezy-dev/kleidi)
 * Social Media, blog post, webinar 
 * [Issue triage, new feature, bug fix](https://github.com/beezy-dev/kleidi/issues)
 * Build, CI/CD, QA help, release management
@@ -39,7 +39,7 @@ unexpected behavior. Use one of the existing templates or follow some example li
 - what actually happens
 - any hint towards a possible root cause and fix 
 
-***NOTE: do not open a Security related bug or issue. We take security and users' trust seriously. If you believe you have found a security issue in kleidi, please responsibly disclose by following the [Security Policy](https://github.com/beezy-dev/kleidi/security/policy).***
+***NOTE: do not open a Security related bug or issue. We take security and users' trust seriously. If you believe you have found a security issue in kleidi, please responsibly disclose by following the [Security Policy](security.md).***
 
 ## Find an Issue
 We use GitHub to host code, track issues and feature requests, as well as accept pull requests. As a start, we have labelled [good first issues](https://github.com/beezy-dev/kleidi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for new contributors and [help wanted](https://github.com/beezy-dev/kleidi/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) issues suitable for any contributor who isn't a core maintainer. 
@@ -107,7 +107,7 @@ When you submit your pull request, or you push new commits to it, our GitHub Act
 1. If your commits does not content all the suggestions, please open an issue with the title ***Follow-On PR #00***. This will 
    allow to pursue or not these suggestions if needed.
 
-1. If your pull request will require a [Documentation](https://github.com/beezy-dev/kleidi/wiki) update, make sure to provide a 
+1. If your pull request will require a [Documentation](https://github.com/beezy-dev/kleidi) update, make sure to provide a 
    a extract of what needs to be changed with the proposed changed. Best would be to clone the wiki and perform a parallel pull 
    request.
 
