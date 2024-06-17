@@ -1,5 +1,5 @@
 /*
-Hashicorp Vault integration for Kleidi
+aws Key integration for Kleidi
 Author: rom@beezy.dev
 Apache 2.0 License
 */
@@ -18,9 +18,9 @@ import (
 	"k8s.io/kms/pkg/service"
 )
 
-var _ service.Service = &hvaultRemoteService{}
+var _ service.Service = &awsKeyRemoteService{}
 
-type hvaultRemoteService struct {
+type awsKeyRemoteService struct {
 	*api.Client
 
 	// keyID      string
@@ -31,7 +31,7 @@ type hvaultRemoteService struct {
 	Address    string `json:"address"`
 }
 
-func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Service, error) {
+func NewawsKeyRemoteService(configFilePath string, debug bool) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalln("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
@@ -50,23 +50,23 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	// 	Debug: debug,
 	// }
 
-	vaultService := &hvaultRemoteService{}
-	vaultService.Debug = debug
-	json.Unmarshal(([]byte(ctx)), &vaultService)
+	awsKeyService := &awsKeyRemoteService{}
+	awsKeyService.Debug = debug
+	json.Unmarshal(([]byte(ctx)), &awsKeyService)
 
 	vaultconfig := api.DefaultConfig()
-	vaultconfig.Address = vaultService.Address
+	vaultconfig.Address = awsKeyService.Address
 
-	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	keypath := fmt.Sprintf("transit/keys/%s", awsKeyService.Transitkey)
 
 	if debug {
 		log.Println("DEBUG:--------------------------------------------------")
 		log.Println("DEBUG: unmarshal JSON values:",
-			"\n                    -> vaultService.debug", vaultService.Debug,
-			"\n                    -> vaultService.Address:", vaultService.Address,
-			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
-			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
-			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
+			"\n                    -> vaultService.debug", awsKeyService.Debug,
+			"\n                    -> vaultService.Address:", awsKeyService.Address,
+			"\n                    -> vaultService.Transitkey:", awsKeyService.Transitkey,
+			"\n                    -> vaultService.Vaultrole:", awsKeyService.Vaultrole,
+			"\n                    -> vaultService.Namespace:", awsKeyService.Namespace,
 			"\n                    -> keypath:", keypath)
 	}
 
@@ -74,20 +74,20 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	if err != nil {
 		if debug {
 			log.Println("DEBUG:--------------------------------------------------")
-			log.Println("DEBUG:client: json.Unmarshal output from configFile:", "\n vaultService.Address:", vaultService.Address)
+			log.Println("DEBUG:client: json.Unmarshal output from configFile:", "\n vaultService.Address:", awsKeyService.Address)
 			log.Println("DEBUG:--------------------------------------------------")
 		}
 		log.Fatalln("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
 	}
 
 	k8sAuth, err := auth.NewKubernetesAuth(
-		vaultService.Vaultrole,
+		awsKeyService.Vaultrole,
 	)
 
 	if err != nil {
 		if debug {
 			log.Println("DEBUG:--------------------------------------------------")
-			log.Println("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
+			log.Println("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", awsKeyService.Vaultrole)
 			log.Println("DEBUG:--------------------------------------------------")
 		}
 		log.Fatalln("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
@@ -104,9 +104,9 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	// vaultService = &hvaultRemoteService{
 	// 	Client: client,
 	// }
-	vaultService.Client = client
+	awsKeyService.Client = client
 
-	client.SetNamespace(vaultService.Namespace)
+	client.SetNamespace(awsKeyService.Namespace)
 
 	key, err := client.Logical().Read(keypath)
 	if err != nil {
@@ -120,10 +120,10 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
 
-	return vaultService, nil
+	return awsKeyService, nil
 }
 
-func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
+func (s *awsKeyRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
 	if s.Debug {
 		log.Println("DEBUG:--------------------------------------------------")
@@ -173,7 +173,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}, nil
 }
 
-func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+func (s *awsKeyRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
 
 	if len(req.Annotations) != 1 {
 		log.Println("--------------------------------------------------------")
@@ -223,7 +223,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 
 }
 
-func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
+func (s *awsKeyRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",

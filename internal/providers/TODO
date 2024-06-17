@@ -1,0 +1,3 @@
+Decouple the provider logics into:
+* a configuration module linked to the provider
+* a enc/dec/status logics agnostic of the provider 
