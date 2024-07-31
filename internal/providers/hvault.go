@@ -23,6 +23,7 @@ var _ service.Service = &hvaultRemoteService{}
 type hvaultRemoteService struct {
 	*api.Client
 
+	LatestKeyID string
 	// keyID      string
 	Debug      bool
 	Namespace  string `json:"namespace"`
@@ -108,18 +109,15 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 	client.SetNamespace(vaultService.Namespace)
 
-	key, err := client.Logical().Read(keypath)
+	// obtain latest version of the transit key and create a key ID for it
+	key, err := vaultService.GetTransitKey(context.Background())
 	if err != nil {
-		if debug {
-			log.Println("DEBUG:--------------------------------------------------")
-			log.Println("DEBUG:key: keypath:", keypath)
-			log.Println("DEBUG:--------------------------------------------------")
-		}
-		log.Fatalln("EXIT:key: unable to find transit key:\n", err.Error())
+		log.Fatalln("ERROR:key: unable to find transit key, restarting:\n", err.Error())
 	}
+	vaultService.LatestKeyID = CreateLatestTransitKeyId(key)
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
-
+	log.Println("INFO: latest key id for plugin:", vaultService.LatestKeyID)
 	return vaultService, nil
 }
 
@@ -166,7 +164,7 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 	return &service.EncryptResponse{
 		Ciphertext: []byte(enresult),
-		KeyID:      keyID,
+		KeyID:      s.LatestKeyID,
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
 		},
@@ -184,7 +182,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
-	if req.KeyID != keyID {
+	if req.KeyID != s.LatestKeyID {
 		return nil, fmt.Errorf("/!\\ invalid keyID")
 	}
 
@@ -224,9 +222,46 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 }
 
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
+	// get transit key, obtain the latest version of the transit key  
+	key, err := s.GetTransitKey(ctx)
+	if err != nil {
+		log.Fatalln("ERROR:key: unable to find transit key, restarting:\n", err.Error())
+			return &service.StatusResponse{
+				Version: "v2",
+				Healthz: "nok",
+				KeyID:  s.LatestKeyID,
+			}, err
+	}
+	// extract the latest and create key id for it
+	s.LatestKeyID = CreateLatestTransitKeyId(key)
+
 	return &service.StatusResponse{
 		Version: "v2",
 		Healthz: "ok",
-		KeyID:   keyID,
+		KeyID:   s.LatestKeyID,
 	}, nil
+}
+
+func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, error) {
+	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("transit/keys/%s", s.Transitkey))
+	if err != nil {
+		// no transit key or no token
+		return nil, err
+	}
+	if s.Debug {
+		log.Println("DEBUG: transit key: ", key)
+	}
+	return key, nil
+}
+
+func CreateLatestTransitKeyId(key *api.Secret) string {
+	latest_version := fmt.Sprintf("%s", key.Data["latest_version"])
+	keys :=  make(map[string]interface{})
+	if a, ok := key.Data["keys"].(map[string]interface{}); ok {
+		keys = a
+	}
+	// key id is concatenated from keyID (constant), field latest_version (a number), 
+	// field keys[latest_version] which is creation timestamp of that key version
+	latest_key_id := fmt.Sprintf("%s_%s_%s", keyID, latest_version, keys[latest_version])
+	return latest_key_id
 }
