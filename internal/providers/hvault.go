@@ -395,11 +395,9 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) (error) {
 func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl int) error {
 	// renews with the original creation_ttl
 	path := fmt.Sprintf("auth/token/renew-self")
-	_, err := s.Client.Logical().WriteWithContext(ctx, 
-												  path, map[string]any{"data": map[string]any{
+	_, err := s.Client.Logical().WriteWithContext(ctx, path, map[string]any{"data": map[string]any{
 																"ttl": fmt.Sprintf("%d", creation_ttl),
-																"renewable": "true",
-												    		}})
+																"renewable": "true",}})
 	if err != nil {
 		log.Println("ERROR:token:path: Something went wrong with token update: \n", err.Error())
 		return err
