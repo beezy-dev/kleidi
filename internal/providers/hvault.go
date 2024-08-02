@@ -9,12 +9,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
-	"errors"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 	auth "github.com/hashicorp/vault/api/auth/kubernetes"
@@ -243,7 +243,7 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 	if s.Debug {
 		log.Println("DEBUG:Status: old latest key ID:", s.LatestKeyID)
 	}
-	// get transit key, obtain the latest version of the transit key  
+	// get transit key, obtain the latest version of the transit key
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {
 		log.Fatalln("ERROR:key: unable to find transit key, restarting:\n", err.Error())
@@ -282,7 +282,7 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 
 	dec, err := s.Decrypt(ctx, fmt.Sprintf("health-dec-%s", strconv.FormatInt(time.Now().Unix(), 10)), &service.DecryptRequest{
 		Ciphertext: enc.Ciphertext,
-		KeyID: s.LatestKeyID,
+		KeyID:      s.LatestKeyID,
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
 		},
@@ -330,11 +330,11 @@ func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, e
 
 func createLatestTransitKeyId(key *api.Secret) string {
 	latest_version := fmt.Sprintf("%s", key.Data["latest_version"])
-	keys :=  make(map[string]interface{})
+	keys := make(map[string]interface{})
 	if a, ok := key.Data["keys"].(map[string]interface{}); ok {
 		keys = a
 	}
-	// key id is concatenated from keyID (constant), field latest_version (a number), 
+	// key id is concatenated from keyID (constant), field latest_version (a number),
 	// field keys[latest_version] which is creation timestamp of that key version
 	latest_key_id := fmt.Sprintf("%s_%s_%s", keyID, latest_version, keys[latest_version])
 	return latest_key_id
@@ -351,7 +351,7 @@ func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, e
 	return token, nil
 }
 
-func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) (error) {
+func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) error {
 	token, err := s.GetVaultToken(ctx)
 	if err != nil {
 		// could not get token - re-authentication needed
@@ -363,18 +363,19 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) (error) {
 		log.Println("DEBUG:token: token_data received: ", token)
 	}
 
-	creation_ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["creation_ttl"]) )
-	ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["ttl"]) )
+	creation_ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["creation_ttl"]))
+	ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["ttl"]))
 
 	if ttl <= 0 || ttl > creation_ttl {
 		// token has been tampered/reboot happened
-		// also if you modify role's ttl with e.g. vault cli like vault write auth/kubernetes/role/kleidi ttl=1h (meaning you want to renew it by hand)
+		// also if you modify role's ttl with e.g. 
+		// vault cli like vault write auth/kubernetes/role/kleidi ttl=1h (meaning you want to renew it by hand)
 		// it's okay if token is renewed with vault token renew -accessor ...
 		log.Fatalln("ERROR:token: invalid ttl, re-login needed")
 		return errors.New("ERROR:token invalid ttl, re-login needed")
 	}
 	// update the token if it reached it's validity periods about 2/3rd
-	if ttl <= creation_ttl - int(float32(creation_ttl)*0.667) {
+	if ttl <= creation_ttl-int(float32(creation_ttl)*0.667) {
 		// update the token
 		if s.Debug {
 			log.Println("DEBUG:token: Updating the token!!!")
@@ -396,8 +397,8 @@ func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl in
 	// renews with the original creation_ttl
 	path := fmt.Sprintf("auth/token/renew-self")
 	_, err := s.Client.Logical().WriteWithContext(ctx, path, map[string]any{"data": map[string]any{
-																"ttl": fmt.Sprintf("%d", creation_ttl),
-																"renewable": "true",}})
+		"ttl":       fmt.Sprintf("%d", creation_ttl),
+		"renewable": "true"}})
 	if err != nil {
 		log.Println("ERROR:token:path: Something went wrong with token update: \n", err.Error())
 		return err
