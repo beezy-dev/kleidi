@@ -58,7 +58,7 @@ func startSofthsm(addr, provider, providerConfig string, debug bool) {
 
 func startHvault(addr, provider, providerConfig string, debug bool) {
 
-	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, debug)
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, addr, debug)
 	if err != nil {
 		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}

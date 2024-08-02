@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"errors"
 
 	"github.com/hashicorp/vault/api"
 	auth "github.com/hashicorp/vault/api/auth/kubernetes"
@@ -23,6 +24,7 @@ var _ service.Service = &hvaultRemoteService{}
 type hvaultRemoteService struct {
 	*api.Client
 
+	UnixSock    string
 	LatestKeyID string
 	// keyID      string
 	Debug      bool
@@ -32,7 +34,7 @@ type hvaultRemoteService struct {
 	Address    string `json:"address"`
 }
 
-func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Service, error) {
+func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalln("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
@@ -53,6 +55,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 
 	vaultService := &hvaultRemoteService{}
 	vaultService.Debug = debug
+	vaultService.UnixSock = addr
 	json.Unmarshal(([]byte(ctx)), &vaultService)
 
 	vaultconfig := api.DefaultConfig()
@@ -114,7 +117,7 @@ func NewVaultClientRemoteService(configFilePath string, debug bool) (service.Ser
 	if err != nil {
 		log.Fatalln("ERROR:key: unable to find transit key, restarting:\n", err.Error())
 	}
-	vaultService.LatestKeyID = CreateLatestTransitKeyId(key)
+	vaultService.LatestKeyID = createLatestTransitKeyId(key)
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
 	log.Println("INFO: latest key id for plugin:", vaultService.LatestKeyID)
@@ -226,20 +229,31 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {
 		log.Fatalln("ERROR:key: unable to find transit key, restarting:\n", err.Error())
-			return &service.StatusResponse{
-				Version: "v2",
-				Healthz: "nok",
-				KeyID:  s.LatestKeyID,
-			}, err
+		return s.createStatusResponse(healthNOK), err
 	}
 	// extract the latest and create key id for it
-	s.LatestKeyID = CreateLatestTransitKeyId(key)
+	s.LatestKeyID = createLatestTransitKeyId(key)
 
+	return s.createStatusResponse(healthOK), nil
+}
+
+func (s *hvaultRemoteService) Health(ctx context.Context) error {
+	// healthcheck function
+	// check if unix socket is still present
+	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
+		log.Fatalln("ERROR: health: socket removed ", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (s *hvaultRemoteService) createStatusResponse(healthz string) *service.StatusResponse {
+	// creates status response ok/nok with latest key ID
 	return &service.StatusResponse{
 		Version: "v2",
-		Healthz: "ok",
+		Healthz: healthz,
 		KeyID:   s.LatestKeyID,
-	}, nil
+	}
 }
 
 func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, error) {
@@ -254,7 +268,7 @@ func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, e
 	return key, nil
 }
 
-func CreateLatestTransitKeyId(key *api.Secret) string {
+func createLatestTransitKeyId(key *api.Secret) string {
 	latest_version := fmt.Sprintf("%s", key.Data["latest_version"])
 	keys :=  make(map[string]interface{})
 	if a, ok := key.Data["keys"].(map[string]interface{}); ok {
