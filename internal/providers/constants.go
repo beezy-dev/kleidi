@@ -5,4 +5,5 @@ const (
 	annotationKey = "v2.kleidi.beezy.dev"
 	healthOK      = "ok"
 	healthNOK     = "nok"
+	healthy       = "healthy"
 )

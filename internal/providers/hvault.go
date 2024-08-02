@@ -13,6 +13,8 @@ import (
 	"log"
 	"os"
 	"errors"
+	"time"
+	"strconv"
 
 	"github.com/hashicorp/vault/api"
 	auth "github.com/hashicorp/vault/api/auth/kubernetes"
@@ -185,9 +187,9 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
-	if req.KeyID != s.LatestKeyID {
-		return nil, fmt.Errorf("/!\\ invalid keyID")
-	}
+	// if req.KeyID != s.LatestKeyID {
+	// 	return nil, fmt.Errorf("/!\\ invalid keyID")
+	// }
 
 	decryptkeypath := fmt.Sprintf("transit/decrypt/%s", s.Transitkey)
 	// // keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
@@ -225,6 +227,14 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 }
 
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
+	// check if unix socket is still present
+	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
+		log.Fatalln("ERROR:status: socket removed ", err.Error())
+		return s.createStatusResponse(healthNOK), err
+	}
+	if s.Debug {
+		log.Println("DEBUG:Status: old latest key ID:", s.LatestKeyID)
+	}
 	// get transit key, obtain the latest version of the transit key  
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {
@@ -233,17 +243,53 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 	}
 	// extract the latest and create key id for it
 	s.LatestKeyID = createLatestTransitKeyId(key)
+	if s.Debug {
+		log.Println("DEBUG:Status: new latest key ID:", s.LatestKeyID)
+	}
+	// do healthcheck
+	err = s.Health(ctx)
+	if err != nil {
+		log.Fatalln("ERROR:Status: unhealthy:\n", err.Error())
+		return s.createStatusResponse(healthNOK), err
+	}
 
 	return s.createStatusResponse(healthOK), nil
 }
 
 func (s *hvaultRemoteService) Health(ctx context.Context) error {
-	// healthcheck function
-	// check if unix socket is still present
-	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
-		log.Fatalln("ERROR: health: socket removed ", err.Error())
+	// check encrypt/decrypt if operation can be performed correctly
+	enc, err := s.Encrypt(ctx, fmt.Sprintf("health-enc-%s", strconv.FormatInt(time.Now().Unix(), 10)), []byte(healthy))
+	if err != nil {
+		if s.Debug {
+			log.Println("DEBUG:Health: encrypt failed: ", err.Error())
+		}
 		return err
 	}
+
+	dec, err := s.Decrypt(ctx, fmt.Sprintf("health-dec-%s", strconv.FormatInt(time.Now().Unix(), 10)), &service.DecryptRequest{
+		Ciphertext: enc.Ciphertext,
+		KeyID: s.LatestKeyID,
+		Annotations: map[string][]byte{
+			annotationKey: []byte("1"),
+		},
+	})
+
+	if err != nil {
+		if s.Debug {
+			log.Println("DEBUG:Health: decrypt failed: ", err.Error())
+		}
+		return err
+	}
+
+	// decrypted plaintext does not match
+	if healthy != string(dec) {
+		return errors.New("ERROR:Health check FAILED")
+	}
+
+	if s.Debug {
+		log.Println("DEBUG:Health check OK")
+	}
+
 	return nil
 }
 
