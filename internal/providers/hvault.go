@@ -123,6 +123,14 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 
 	log.Println("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
 	log.Println("INFO: latest key id for plugin:", vaultService.LatestKeyID)
+
+	// initial token check - it can happen that k8s restarted ??
+	err = vaultService.CheckTokenValidity(context.Background())
+	if err != nil {
+		log.Fatalln("EXIT:token: could not check token validity: \n", err.Error())
+		return vaultService, err
+	}
+
 	return vaultService, nil
 }
 
@@ -257,6 +265,12 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 }
 
 func (s *hvaultRemoteService) Health(ctx context.Context) error {
+	// check if it has valid token lease (Vault)
+	err := s.CheckTokenValidity(ctx)
+	if err != nil {
+		log.Fatalln("ERROR:health:token: token validity check failed:\n", err.Error())
+		return err
+	}
 	// check encrypt/decrypt if operation can be performed correctly
 	enc, err := s.Encrypt(ctx, fmt.Sprintf("health-enc-%s", strconv.FormatInt(time.Now().Unix(), 10)), []byte(healthy))
 	if err != nil {
@@ -324,4 +338,74 @@ func createLatestTransitKeyId(key *api.Secret) string {
 	// field keys[latest_version] which is creation timestamp of that key version
 	latest_key_id := fmt.Sprintf("%s_%s_%s", keyID, latest_version, keys[latest_version])
 	return latest_key_id
+}
+
+func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, error) {
+	// requires policy to have: "auth/token/lookup-self read and "auth/token/renew-self" update
+	path := fmt.Sprintf("auth/token/lookup-self")
+	token, err := s.Client.Logical().ReadWithContext(ctx, path)
+	if err != nil {
+		log.Println("ERROR:token:path: cannot read path: \n", err.Error())
+		return nil, err
+	}
+	return token, nil
+}
+
+func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) (error) {
+	token, err := s.GetVaultToken(ctx)
+	if err != nil {
+		// could not get token - re-authentication needed
+		log.Fatalln("ERROR:token:check could not get token: ", err.Error())
+		return err
+	}
+	if s.Debug {
+		// beware - it prints out the token itself!!
+		log.Println("DEBUG:token: token_data received: ", token)
+	}
+
+	creation_ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["creation_ttl"]) )
+	ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["ttl"]) )
+
+	if ttl <= 0 || ttl > creation_ttl {
+		// token has been tampered/reboot happened
+		// also if you modify role's ttl with e.g. vault cli like vault write auth/kubernetes/role/kleidi ttl=1h (meaning you want to renew it by hand)
+		// it's okay if token is renewed with vault token renew -accessor ...
+		log.Fatalln("ERROR:token: invalid ttl, re-login needed")
+		return errors.New("ERROR:token invalid ttl, re-login needed")
+	}
+	// update the token if it reached it's validity periods about 2/3rd
+	if ttl <= creation_ttl - int(float32(creation_ttl)*0.667) {
+		// update the token
+		if s.Debug {
+			log.Println("DEBUG:token: Updating the token!!!")
+		}
+		err = s.RenewOwnToken(ctx, creation_ttl)
+		if err != nil {
+			log.Println("ERROR:token: could not renew token: ", err.Error())
+			return err
+		}
+	}
+	// no need for token update
+	if s.Debug {
+		log.Println("DEBUG:token: No need for token update.")
+	}
+	return nil
+}
+
+func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl int) error {
+	// renews with the original creation_ttl
+	path := fmt.Sprintf("auth/token/renew-self")
+	_, err := s.Client.Logical().WriteWithContext(ctx, 
+												  path, map[string]any{"data": map[string]any{
+																"ttl": fmt.Sprintf("%d", creation_ttl),
+																"renewable": "true",
+												    		}})
+	if err != nil {
+		log.Println("ERROR:token:path: Something went wrong with token update: \n", err.Error())
+		return err
+	}
+	if s.Debug {
+		log.Println("DEBUG:token: Token update successful.")
+	}
+	return nil
 }
