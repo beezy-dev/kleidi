@@ -6,11 +6,11 @@ nodes:
   image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
   extraMounts:
     - containerPath: /etc/kubernetes/encryption-config.yaml
-      hostPath: k8s/encryption/vault-encryption-config.yaml
+      hostPath: configuration/k8s/encryption/vault-encryption-config.yaml
       readOnly: true
       propagation: None 
     - containerPath: /opt/kleidi/config.json
-      hostPath: kleidi/vault-config.json
+      hostPath: configuration/kleidi/vault-config.json
       readOnly: true
       propagation: None
   kubeadmConfigPatches:

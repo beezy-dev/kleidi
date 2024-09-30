@@ -2,5 +2,5 @@
   "namespace": "",
   "transitkey": "kleidi",
   "vaultrole": "kleidi",
-  "address": "http://10.89.0.1:8200" 
+  "address": "http://172.20.10.9:8200" 
 }
