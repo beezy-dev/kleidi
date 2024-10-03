@@ -13,9 +13,10 @@ RUN go mod download
 RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo cmd/kleidi/main.go
 
 FROM quay.io/centos/centos:stream9
+RUN dnf -y install jq opensc softhsm; dnf clean all;
 
 LABEL org.opencontainers.image.source=https://github.com/beezy-dev/kleidi 
-LABEL org.opencontainers.image.title="Kleidi - Kubernetes KMS Plugin for Vault" 
+LABEL org.opencontainers.image.title="Kleidi - Kubernetes KMS Plugin for HSM" 
 LABEL org.opencontainers.image.vendor="beeyz.dev" 
 LABEL org.opencontainers.image.licenses="Apache-2.0" 
 LABEL org.opencontainers.image.description="Kleidi is an open-source Kubernetes Plugin supporting multiple KMS services." 

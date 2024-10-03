@@ -16,11 +16,51 @@ const (
 	socketTimeOut = 10 * time.Second
 )
 
-func StartHvault(addr, providerConfig string, debug bool) {
+func StartProvider(addr, provider, providerConfig string, debug bool) {
+
+	switch provider {
+	case "softhsm":
+		startSofthsm(addr, provider, providerConfig, debug)
+	case "hvault":
+		startHvault(addr, provider, providerConfig, debug)
+	case "tpm":
+		startTpm(addr, provider, providerConfig, debug)
+	}
+}
+
+func startSofthsm(addr, provider, providerConfig string, debug bool) {
+
+	if debug {
+		log.Println("test")
+	}
+
+	remoteKMSService, err := providers.NewPKCS11RemoteService(providerConfig, "kleidi-kms-plugin")
+	if err != nil {
+		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
+	}
+	// catch SIG termination.
+	ctx := withShutdownSignal(context.Background())
+	grpcService := service.NewGRPCService(
+		addr,
+		socketTimeOut,
+		remoteKMSService,
+	)
+	// starting service.
+	go func() {
+		if err := grpcService.ListenAndServe(); err != nil {
+			log.Fatalln("EXIT: failed to serve with error:\n", err.Error())
+		}
+	}()
+
+	<-ctx.Done()
+	grpcService.Shutdown()
+}
+
+func startHvault(addr, provider, providerConfig string, debug bool) {
 
 	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, addr, debug)
 	if err != nil {
-		log.Fatalln("EXIT: remote HashiCorp Vault KMS provider failed with error:\n", err.Error())
+		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}
 
 	ctx := withShutdownSignal(context.Background())
@@ -37,6 +77,17 @@ func StartHvault(addr, providerConfig string, debug bool) {
 
 	<-ctx.Done()
 	grpcService.Shutdown()
+
+}
+
+func startTpm(addr, provider, providerConfig string, debug bool) {
+
+	if debug {
+		log.Println("test")
+	}
+
+	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
+	providers.TmpPlaceholder()
 
 }
 
