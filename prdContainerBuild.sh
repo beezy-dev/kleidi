@@ -19,16 +19,15 @@ NC='\033[0m' # No Color
 
 # Define variables 
 VERSION=$(git log -1 --pretty=%h)
-GITREPO="https://github.com/beezy-dev/kleidi.git" 
-CONTREG="ghcr.io/beezy-dev/kleidi-kms-plugin" 
-INITREG="ghcr.io/beezy-dev/kleidi-kms-init" 
+GITREPO="https://github.com/beezy-dev/kleidi-vault.git" 
+CONTREG="ghcr.io/beezy-dev/kleidi-vault" 
 BUILDDT=$(date '+%F_%H:%M:%S' )
 
 STR="'$*'" 
 
-# echo 
-# echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
-# gosec -no-fail -fmt sarif -out results.sarif ./...
+echo 
+echo -e "${NC}Running gosec with report ${BLUE}results.sarif${NC}."
+gosec -no-fail -fmt sarif -out results.sarif ./...
 
 # echo 
 # echo -e "${NC}Git commit with message ${BLUE}$STR${NC}."
@@ -40,16 +39,7 @@ STR="'$*'"
 echo -e "${NC}Building kleidi vault container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
 podman build -f Containerfile-kleidi-kms-vault -t "$CONTREG:vault-$VERSION" -t "$CONTREG:vault-latest" --build-arg VERSION="$VERSION"
 
-echo -e "${NC}Building kleidi hsm container image ${BLUE}$CONTREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f Containerfile-kleidi-kms-hsm -t "$CONTREG:hsm-$VERSION" -t "$CONTREG:hsm-latest" --build-arg VERSION="$VERSION"
-
 echo -e "${NC}Container pushed to push to ${BLUE}$CONTREG${NC} with tags ${BLUE}$VERSION${NC} and ${BLUE}dev${NC}." 
 podman push $CONTREG:vault-$VERSION
-podman push $CONTREG:hsm-$VERSION
 podman push $CONTREG:vault-latest
-podman push $CONTREG:hsm-latest
 
-echo -e "${NC}Building kleidi hsm init container image ${BLUE}$INITREG:$VERSION${NC} on ${BLUE}$BUILDDT${NC}."  
-podman build -f configuration/kleidi-init/Containerfile -t "$INITREG:hsm-$VERSION" -t "$INITREG:hsm-latest" --build-arg VERSION="$VERSION"
-podman push $INITREG:hsm-$VERSION
-podman push $INITREG:hsm-latest

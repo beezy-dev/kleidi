@@ -1,54 +1,5 @@
-# kleidi KMS provider plugin for Kubernetes
+# Kleidi KMS HashiCorp Vault Provider Plugin for Kubernetes
 
-## Why? 
-The traditional credentials handling practices enforce a clear separation of concerns between application and infrastructure teams.   
-However, Kubernetes centralized credentials through the ```secret``` and ```configmap``` API objects within ```etcd``` with an encryption layer. 
+This repository is a strip down version of Kleidi to support HashiCorp Vault only. 
 
-More here [Security](docs/exposures.md) or with [Kubernetes Secrets Handbook](https://www.amazon.com/Kubernetes-Secrets-Handbook-production-grade-management/dp/180512322X)
-
-## How?
-Kubernetes introduces a KMS plugin framework to support access to an external security (hardware or software) module and enable an envelope encryption practice. 
-The Kubernetes API server will encrypt plaintext data with a data key, request kleidi to encrypt the data key with a third-party key, and store all the encrypted payload in ```etcd```. 
-Reading the payload will require access to the third-party provider via Kleidi.
-
-## Current state
-* KMSv2 with Kubernetes 1.29 and onwards.
-* PKCS#11 interface to [SoftHSM](https://www.opendnssec.org/softhsm/) deployed on the control plane nodes.   
-* HashiCorp Vault Community/Enterprise integration
-More here [Implementation](docs/architecture.md)
-
-# Deployments
-
-* [HashiCorp Vault Implementation](docs/vault.md)
-* [SoftHSM Implementation](docs/softhsm.md)
-
-## Future state  
-* (v)TPM integration (see R&D)
-* AWS/Azure Key Vault integration
-* Delinea/Thycotic integration 
-
-
-## Additional collaterals
-
-### Code of Conduct
-We believe in a space for everyone and we embrace the following [code of conduct](docs/code_of_conduct.md).
-
-### Contributing
-The essence of open source is sharing and contributing to knowledge. The guidelines are available [here](docs/contributing.md).
-
-### Security
-We take security and trust seriously. If you believe that you have found a security issue in this project, *please disclose responsibly the details by following the [security policy](docs/security.md). 
-
-
-## Origin of kleidi
-<img align="right" src="https://beezy.dev/images/DALL-E-kleid%C3%AD_comic_strip.png" width="25%">
-
-Initially, [romdalf](https://github.com/romdalf) founded [Trousseau](https://trousseau.io) in 2019 and released a production-grade KMSv1 provider plugin during his tenure at Ondat.  
-
-With the Kubernetes project moving to KMSv2 stable at 1.29 and KMSv1 being deprecated since 1.27, a decision needed to be made regarding rewriting the plugin, leading to the creation of kleidi.
-
-The origin is Greek, and the meaning is "key". (Source: [Wikipedia](https://en.wiktionary.org/wiki/%CE%BA%CE%BB%CE%B5%CE%B9%CE%B4%CE%AF))
-
-<br clear="left"/>
-<br clear="left"/>
-
+Please refer to [beezy-dev/kleidi](https://github.com/beezy-dev/kleidi) for more details about the project.
