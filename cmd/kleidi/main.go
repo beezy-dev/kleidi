@@ -8,10 +8,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 
 	"github.com/beezy-dev/kleidi/internal/utils"
+	"k8s.io/klog/v2"
 )
 
 var kleidiVersion string
@@ -29,11 +29,11 @@ func main() {
 	// Parsing environment variables.
 	flag.Parse()
 
-	// Prettyfy the starting header fetching built version at compile time.
-	log.Println("--------------------------------------------------------")
-	log.Println("Kleidi", "v"+kleidiVersion, "KMS Provider Plugin for Kubernetes.")
-	log.Println("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
-	log.Println("--------------------------------------------------------")
+	// Setting up klog
+	klog.InitFlags(nil)
+	
+	klog.Info("Kleidi", "v"+kleidiVersion, "KMS Provider Plugin for Kubernetes.")
+	klog.Info("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
 
 	// Validating the socket location.
 	addr, err := utils.ValidateListenAddr(*listenAddr)
