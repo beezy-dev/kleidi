@@ -114,45 +114,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 61,
+									"endLine": 57,
 									"snippet": {
 										"text": "json.Unmarshal(([]byte(ctx)), \u0026vaultService)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 61
-								}
-							}
-						}
-					],
-					"message": {
-						"text": "Errors unhandled."
-					},
-					"ruleId": "G104"
-				},
-				{
-					"fixes": [
-						{
-							"artifactChanges": null,
-							"description": {}
-						}
-					],
-					"level": "warning",
-					"locations": [
-						{
-							"physicalLocation": {
-								"artifactLocation": {
-									"uri": "cmd/kleidi/main.go"
-								},
-								"region": {
-									"endColumn": 2,
-									"endLine": 30,
-									"snippet": {
-										"text": "flag.Set(\"v\", \"2\")"
-									},
-									"sourceLanguage": "go",
-									"startColumn": 2,
-									"startLine": 30
+									"startLine": 57
 								}
 							}
 						}

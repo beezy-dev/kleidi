@@ -38,17 +38,13 @@ type hvaultRemoteService struct {
 
 func NewVaultClientRemoteService(configFilePath string, addr string) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
+	klog.V(2).InfoS("DEBUG", "keyID", keyID)
 	if err != nil {
 		klog.Fatal("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
 	}
 	if len(keyID) == 0 {
 		klog.Fatal("EXIT:keyID len: invalid keyID")
 	}
-
-	//	if debug {
-	//		klog.Info("DEBUG:--------------------------------------------------")
-	//		klog.Info("DEBUG: verifying keyID:", keyID)
-	//	}
 
 	// vaultService := &hvaultRemoteService{
 	// 	// keyID: keyID,
@@ -63,40 +59,29 @@ func NewVaultClientRemoteService(configFilePath string, addr string) (service.Se
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
-	// keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
 
-	//	if debug {
-	//		klog.Info("DEBUG:--------------------------------------------------")
-	//		klog.Info("DEBUG: unmarshal JSON values:",
-	//			"\n                    -> vaultService.debug", vaultService.Debug,
-	//			"\n                    -> vaultService.Address:", vaultService.Address,
-	//			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
-	//			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
-	//			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
-	//			"\n                    -> keypath:", keypath)
-	//	}
+	klog.V(2).Info("DEBUG: unmarshal JSON values:",
+		"\n                    -> vaultService.debug", vaultService.Debug,
+		"\n                    -> vaultService.Address:", vaultService.Address,
+		"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
+		"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
+		"\n                    -> vaultService.Namespace:", vaultService.Namespace,
+		"\n                    -> keypath:", keypath)
 
 	client, err := api.NewClient(vaultconfig)
+	klog.V(2).Info("DEBUG:client: json.Unmarshal output from configFile:",
+		"\n vaultService.Address:", vaultService.Address)
 	if err != nil {
-		//		if debug {
-		//			klog.Info("DEBUG:--------------------------------------------------")
-		//			klog.Info("DEBUG:client: json.Unmarshal output from configFile:", "\n vaultService.Address:", vaultService.Address)
-		//			klog.Info("DEBUG:--------------------------------------------------")
-		//		}
-		//		klog.Fatal("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
+		klog.Fatal("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
 	}
 
 	k8sAuth, err := auth.NewKubernetesAuth(
 		vaultService.Vaultrole,
 	)
-
+	klog.V(2).Info("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
 	if err != nil {
-		//		if debug {
-		//			klog.Info("DEBUG:--------------------------------------------------")
-		//			klog.Info("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
-		//			klog.Info("DEBUG:--------------------------------------------------")
-		//		}
-		//		klog.Fatal("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
+		klog.Fatal("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
 	}
 
 	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)

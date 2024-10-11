@@ -27,16 +27,14 @@ func main() {
 
 	// Setting up klog
 	klog.InitFlags(nil)
-	flag.Set("v", "2") 
 	flag.Parse()
 
 	klog.Info("----------------------------------------------------------------")
-	klog.InfoS("Kleidi", "v", kleidiVersion, "KMS Provider Plugin for Kubernetes.")
+	klog.Info("Kleidi KMS Provider Plugin ", "v", kleidiVersion)
 	klog.Info("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
 	klog.Info("----------------------------------------------------------------")
 	klog.V(2).Info("/!\\ Debugging mode activated - Do not use in Production /!\\")
 	klog.V(2).Info("----------------------------------------------------------------")
-
 
 	// Validating the socket location.
 	addr, err := utils.ValidateListenAddr(*listenAddr)
