@@ -38,12 +38,13 @@ type hvaultRemoteService struct {
 
 func NewVaultClientRemoteService(configFilePath string, addr string) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
-	klog.V(2).InfoS("DEBUG", "keyID", keyID)
+	klog.V(2).Info("DEBUG: keyID=", keyID)
 	if err != nil {
-		klog.Fatal("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
+		klog.Fatal("FATAL: failed to read Vault config file with error:",
+			"\n                    -> ", err.Error())
 	}
 	if len(keyID) == 0 {
-		klog.Fatal("EXIT:keyID len: invalid keyID")
+		klog.Fatal("FATAL: keyID len: invalid keyID")
 	}
 
 	// vaultService := &hvaultRemoteService{
@@ -62,34 +63,30 @@ func NewVaultClientRemoteService(configFilePath string, addr string) (service.Se
 	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
 
 	klog.V(2).Info("DEBUG: unmarshal JSON values:",
-		"\n                    -> vaultService.debug", vaultService.Debug,
-		"\n                    -> vaultService.Address:", vaultService.Address,
-		"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
-		"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
-		"\n                    -> vaultService.Namespace:", vaultService.Namespace,
-		"\n                    -> keypath:", keypath)
+		"\n                    -> vaultService.Address=", vaultService.Address,
+		"\n                    -> vaultService.Transitkey=", vaultService.Transitkey,
+		"\n                    -> vaultService.Vaultrole=", vaultService.Vaultrole,
+		"\n                    -> vaultService.Namespace=", vaultService.Namespace,
+		"\n                    -> keypath=", keypath)
 
 	client, err := api.NewClient(vaultconfig)
-	klog.V(2).Info("DEBUG:client: json.Unmarshal output from configFile:",
-		"\n vaultService.Address:", vaultService.Address)
 	if err != nil {
-		klog.Fatal("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
+		klog.Fatal("FATAL: failed to initialize Vault client with error:\n", err.Error())
 	}
 
 	k8sAuth, err := auth.NewKubernetesAuth(
 		vaultService.Vaultrole,
 	)
-	klog.V(2).Info("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
 	if err != nil {
-		klog.Fatal("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
+		klog.Fatal("FATAL: unable to connect to Vault with error:\n", err.Error())
 	}
 
 	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)
 	if err != nil {
-		klog.Fatal("EXIT:authInfo: unable to log in with Kubernetes auth with error:\n", err.Error())
+		klog.Fatal("FATAL: unable to log in to Vault with error:\n", err.Error())
 	}
 	if authInfo == nil {
-		klog.Fatal("EXIT:authInfo: no kubernetes auth info was returned after login")
+		klog.Fatal("FATAL: no kubernetes auth info was returned after login")
 	}
 
 	// vaultService = &hvaultRemoteService{
@@ -101,17 +98,16 @@ func NewVaultClientRemoteService(configFilePath string, addr string) (service.Se
 	// obtain latest version of the transit key and create a key ID for it
 	key, err := vaultService.GetTransitKey(context.Background())
 	if err != nil {
-		klog.Fatal("ERROR:key: unable to find transit key, restarting:\n", err.Error())
+		klog.Fatal("ERROR: unable to find transit key, restarting:\n", err.Error())
 	}
 	vaultService.LatestKeyID = createLatestTransitKeyId(key)
 
-	klog.Info("INFO: latest key version:", key.Data["latest_version"], "for provided transit key:", key.Data["name"])
-	klog.Info("INFO: latest key id for plugin:", vaultService.LatestKeyID)
+	klog.Info("INFO: latest keyID for plugin:", vaultService.LatestKeyID)
 
 	// initial token check - it can happen that k8s restarted ??
 	err = vaultService.CheckTokenValidity(context.Background())
 	if err != nil {
-		klog.Fatal("EXIT:token: could not check token validity: \n", err.Error())
+		klog.Fatal("FATAL: could not check token validity: \n", err.Error())
 		return vaultService, err
 	}
 
@@ -120,43 +116,31 @@ func NewVaultClientRemoteService(configFilePath string, addr string) (service.Se
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
-	//	if s.Debug {
-	//		klog.Info("DEBUG:--------------------------------------------------")
-	//		klog.Info("DEBUG: unencrypted payload:", string([]byte(plaintext)))
-	//		klog.Info("DEBUG:--------------------------------------------------")
-	//	}
-
-	//	klog.Info("DEBUG:--------------------------------------------------")
-	//	klog.Info("DEBUG: unmarshal JSON values:",
-	//		"\n                    -> vaultService.debug", s.Debug,
-	//		"\n                    -> vaultService.Address:", s.Address,
-	//		"\n                    -> vaultService.Transitkey:", s.Transitkey,
-	//		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
-	//		"\n                    -> vaultService.Namespace:", s.Namespace)
+	klog.V(2).Info("DEBUG: unencrypted payload:", string([]byte(plaintext)))
 
 	enckeypath := fmt.Sprintf("transit/encrypt/%s", s.Transitkey)
+	klog.V(2).Info("DEBUG: enckeypath:", enckeypath)
+
 	// keypath := "transit/encrypt/kleidi"
 	encodepayload := map[string]interface{}{
 		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
 	}
 
 	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	klog.V(2).Info("DEBUG: encrypt:",
+		"\n                   -> debug:", s.Debug,
+		"\n                   -> plaintext:", string([]byte(plaintext)),
+		"\n                   -> keypath:", enckeypath,
+		"\n                   -> encodepayload:", encodepayload)
 	if err != nil {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:encrypt:",
-			"\n debug:", s.Debug,
-			"\nplaintext:", string([]byte(plaintext)),
-			"\nkeypath:", enckeypath,
-			"\nencodepayload:", encodepayload)
-		klog.Info("--------------------------------------------------------")
-		klog.Fatal("EXIT:encrypt: with error:\n", err.Error())
+		klog.Fatal("FATAL: encrypt: with error:",
+			"\n                   -> ", err.Error())
 	}
 	enresult, ok := encrypt.Data["ciphertext"].(string)
+	klog.V(2).Info("DEBUG: enresult:",
+		"\n                   -> enresult:", string([]byte(enresult)))
 	if !ok {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:enresult:", "\nenresult:", string([]byte(enresult)))
-		klog.Info("--------------------------------------------------------")
-		klog.Fatal("EXIT:enresult: invalid response")
+		klog.Fatal("FATAL: enresult: invalid response")
 	}
 
 	return &service.EncryptResponse{
@@ -170,10 +154,9 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 
 func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
 
+	klog.V(2).Info("DEBUG: len:",
+		"\n                   -> req.Annotations:", req.Annotations)
 	if len(req.Annotations) != 1 {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:len:", "\req.Annotations:", req.Annotations)
-		klog.Info("--------------------------------------------------------")
 		return nil, fmt.Errorf("/!\\ invalid annotations")
 	}
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
@@ -184,6 +167,9 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	// }
 
 	decryptkeypath := fmt.Sprintf("transit/decrypt/%s", s.Transitkey)
+	klog.V(2).Info("DEBUG: decryptkeypath:",
+		"\n                   -> ", decryptkeypath)
+
 	// // keypath := fmt.Sprintf("transit/keys/%s", s.Transitkey)
 	// keypath := "transit/decrypt/kleidi"
 	encryptedPayload := map[string]interface{}{
@@ -191,27 +177,25 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	}
 
 	encryptedResponse, err := s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
+	klog.V(2).Info("DEBUG: encryptedResponse:",
+		"\n                   -> keypath:", decryptkeypath,
+		"\n                   -> enresult:", encryptedPayload)
 	if err != nil {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:encryptedResponse:", "\nkeypath:", decryptkeypath, "\nenresult:", encryptedPayload)
-		klog.Info("--------------------------------------------------------")
-		klog.Fatal("EXIT:encryptedResponse: with error:", err.Error())
+		klog.Fatal("FATAL: encryptedResponse: with error:", err.Error())
 	}
 
 	response, ok := encryptedResponse.Data["plaintext"].(string)
+	klog.V(2).Info("DEBUG: response:",
+		"\n                   -> response:", response)
 	if !ok {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:response:", "\nresponse:", response)
-		klog.Info("--------------------------------------------------------")
-		klog.Fatal("EXIT:response: invalid response")
+		klog.Fatal("FATAL: response: invalid response")
 	}
 
 	decodepayload, err := base64.StdEncoding.DecodeString(response)
+	klog.V(2).Info("DEBUG: decodepayload:",
+		"\n                   -> payload:", decodepayload)
 	if err != nil {
-		klog.Info("--------------------------------------------------------")
-		klog.Info("DEBUG:decodepayload:", "\npayload:", decodepayload)
-		klog.Info("--------------------------------------------------------")
-		klog.Fatal("EXIT:decodepayload: with error:", err.Error())
+		klog.Fatal("FATAL: decodepayload: with error:", err.Error())
 	}
 
 	return decodepayload, nil
@@ -221,27 +205,25 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
 	// check if unix socket is still present
 	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
-		klog.Fatal("ERROR:status: socket removed ", err.Error())
+		klog.Fatal("ERROR: socket removed ", err.Error())
 		return s.createStatusResponse(healthNOK), err
 	}
-	if s.Debug {
-		klog.Info("DEBUG:Status: old latest key ID:", s.LatestKeyID)
-	}
+	klog.Info("DEBUG: old latest key ID:", s.LatestKeyID)
 	// get transit key, obtain the latest version of the transit key
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {
-		klog.Fatal("ERROR:key: unable to find transit key, restarting:\n", err.Error())
+		klog.Fatal("ERROR: unable to find transit key, restarting:\n", err.Error())
 		return s.createStatusResponse(healthNOK), err
 	}
 	// extract the latest and create key id for it
 	s.LatestKeyID = createLatestTransitKeyId(key)
 	if s.Debug {
-		klog.Info("DEBUG:Status: new latest key ID:", s.LatestKeyID)
+		klog.Info("DEBUG: new latest key ID:", s.LatestKeyID)
 	}
 	// do healthcheck
 	err = s.Health(ctx)
 	if err != nil {
-		klog.Fatal("ERROR:Status: unhealthy:\n", err.Error())
+		klog.Fatal("ERROR: unhealthy:\n", err.Error())
 		return s.createStatusResponse(healthNOK), err
 	}
 
@@ -252,14 +234,14 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 	// check if it has valid token lease (Vault)
 	err := s.CheckTokenValidity(ctx)
 	if err != nil {
-		klog.Fatal("ERROR:health:token: token validity check failed:\n", err.Error())
+		klog.Fatal("ERROR: token: token validity check failed:\n", err.Error())
 		return err
 	}
 	// check encrypt/decrypt if operation can be performed correctly
 	enc, err := s.Encrypt(ctx, fmt.Sprintf("health-enc-%s", strconv.FormatInt(time.Now().Unix(), 10)), []byte(healthy))
 	if err != nil {
 		if s.Debug {
-			klog.Info("DEBUG:Health: encrypt failed: ", err.Error())
+			klog.Info("DEBUG: en/decrypt operation failed: ", err.Error())
 		}
 		return err
 	}
@@ -274,7 +256,7 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 
 	if err != nil {
 		if s.Debug {
-			klog.Info("DEBUG:Health: decrypt failed: ", err.Error())
+			klog.Info("DEBUG: Health: decrypt failed: ", err.Error())
 		}
 		return err
 	}
@@ -326,10 +308,10 @@ func createLatestTransitKeyId(key *api.Secret) string {
 
 func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, error) {
 	// requires policy to have: "auth/token/lookup-self read and "auth/token/renew-self" update
-	path := fmt.Sprintf("auth/token/lookup-self")
+	path := "auth/token/lookup-self"
 	token, err := s.Client.Logical().ReadWithContext(ctx, path)
 	if err != nil {
-		klog.Info("ERROR:token:path: cannot read path: \n", err.Error())
+		klog.Info("ERROR: token:path: cannot read path: \n", err.Error())
 		return nil, err
 	}
 	return token, nil
@@ -339,12 +321,12 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) error {
 	token, err := s.GetVaultToken(ctx)
 	if err != nil {
 		// could not get token - re-authentication needed
-		klog.Fatal("ERROR:token:check could not get token: ", err.Error())
+		klog.Fatal("ERROR: token:check could not get token: ", err.Error())
 		return err
 	}
 	if s.Debug {
 		// beware - it prints out the token itself!!
-		klog.Info("DEBUG:token: token_data received: ", token)
+		klog.Info("DEBUG: token: token_data received: ", token)
 	}
 
 	creation_ttl, _ := strconv.Atoi(fmt.Sprintf("%s", token.Data["creation_ttl"]))
@@ -372,23 +354,23 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) error {
 	}
 	// no need for token update
 	if s.Debug {
-		klog.Info("DEBUG:token: No need for token update.")
+		klog.Info("DEBUG: token: No need for token update.")
 	}
 	return nil
 }
 
 func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl int) error {
 	// renews with the original creation_ttl
-	path := fmt.Sprintf("auth/token/renew-self")
+	path := "auth/token/renew-self"
 	_, err := s.Client.Logical().WriteWithContext(ctx, path, map[string]any{"data": map[string]any{
 		"ttl":       fmt.Sprintf("%d", creation_ttl),
 		"renewable": "true"}})
 	if err != nil {
-		klog.Info("ERROR:token:path: Something went wrong with token update: \n", err.Error())
+		klog.Info("ERROR: token:path: Something went wrong with token update: \n", err.Error())
 		return err
 	}
 	if s.Debug {
-		klog.Info("DEBUG:token: Token update successful.")
+		klog.Info("DEBUG: token: Token update successful.")
 	}
 	return nil
 }
