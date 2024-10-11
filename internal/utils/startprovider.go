@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,33 +9,30 @@ import (
 
 	"github.com/beezy-dev/kleidi/internal/providers"
 	"k8s.io/kms/pkg/service"
+        "k8s.io/klog/v2"
 )
 
 const (
 	socketTimeOut = 10 * time.Second
 )
 
-func StartProvider(addr, provider, providerConfig string, debug bool) {
+func StartProvider(addr, provider, providerConfig string) {
 
 	switch provider {
 	case "softhsm":
-		startSofthsm(addr, provider, providerConfig, debug)
+		startSofthsm(addr, provider, providerConfig)
 	case "hvault":
-		startHvault(addr, provider, providerConfig, debug)
+		startHvault(addr, provider, providerConfig)
 	case "tpm":
-		startTpm(addr, provider, providerConfig, debug)
+		startTpm(addr, provider, providerConfig)
 	}
 }
 
-func startSofthsm(addr, provider, providerConfig string, debug bool) {
-
-	if debug {
-		log.Println("test")
-	}
+func startSofthsm(addr, provider, providerConfig string) {
 
 	remoteKMSService, err := providers.NewPKCS11RemoteService(providerConfig, "kleidi-kms-plugin")
 	if err != nil {
-		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
+		klog.Fatal("remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}
 	// catch SIG termination.
 	ctx := withShutdownSignal(context.Background())
@@ -48,7 +44,7 @@ func startSofthsm(addr, provider, providerConfig string, debug bool) {
 	// starting service.
 	go func() {
 		if err := grpcService.ListenAndServe(); err != nil {
-			log.Fatalln("EXIT: failed to serve with error:\n", err.Error())
+			klog.Fatal("failed to serve with error:\n", err.Error())
 		}
 	}()
 
@@ -56,11 +52,11 @@ func startSofthsm(addr, provider, providerConfig string, debug bool) {
 	grpcService.Shutdown()
 }
 
-func startHvault(addr, provider, providerConfig string, debug bool) {
+func startHvault(addr, provider, providerConfig string) {
 
-	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, addr, debug)
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, addr)
 	if err != nil {
-		log.Fatalln("EXIT: remote KMS provider [", provider, "] failed with error:\n", err.Error())
+		klog.Fatal("remote KMS provider [", provider, "] failed with error:\n", err.Error())
 	}
 
 	ctx := withShutdownSignal(context.Background())
@@ -71,7 +67,7 @@ func startHvault(addr, provider, providerConfig string, debug bool) {
 	)
 	go func() {
 		if err := grpcService.ListenAndServe(); err != nil {
-			log.Fatalln("EXIT: failed to serve with error:\n", err.Error())
+			klog.Fatal("failed to serve with error:\n", err.Error())
 		}
 	}()
 
@@ -80,13 +76,9 @@ func startHvault(addr, provider, providerConfig string, debug bool) {
 
 }
 
-func startTpm(addr, provider, providerConfig string, debug bool) {
+func startTpm(addr, provider, providerConfig string) {
 
-	if debug {
-		log.Println("test")
-	}
-
-	log.Println("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
+	klog.V(2).Info("BETA: flag -provider", provider, "with -listen", addr, "and -configfile", providerConfig, "currently unsafe to used in production.")
 	providers.TmpPlaceholder()
 
 }

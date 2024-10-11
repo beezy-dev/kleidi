@@ -2,10 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"slices"
 	"strings"
+
+        "k8s.io/klog/v2"
 )
 
 func ValidateListenAddr(listenAddr string) (string, error) {
@@ -32,7 +33,7 @@ func ValidateListenAddr(listenAddr string) (string, error) {
 		return strings.TrimPrefix(url.Path, "/"), nil
 	}
 
-	log.Println("INFO: flag -listen set to", listenAddr)
+	klog.Info("flag -listen set to", listenAddr)
 	return url.Path, nil
 }
 
@@ -43,7 +44,7 @@ func ValidateProvider(providerService string) (string, error) {
 		return providerService, fmt.Errorf("/!\\ flag -provider is not supported. Only %v are valid options", providerServices)
 	}
 
-	log.Println("INFO: flag -provider set to", providerService)
+	klog.Info("flag -provider set to", providerService)
 	return providerService, nil
 }
 
@@ -53,7 +54,7 @@ func ValidateConfigfile(providerConfigFile string) (string, error) {
 		return providerConfigFile, fmt.Errorf("/!\\ can not be an empty string")
 	}
 
-	log.Println("INFO: flag -configfile set to", providerConfigFile)
+	klog.Info("flag -configfile set to", providerConfigFile)
 	return providerConfigFile, nil
 
 }

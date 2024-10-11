@@ -23,46 +23,47 @@ func main() {
 		listenAddr         = flag.String("listen", "unix:///tmp/kleidi/kleidi-kms-plugin.socket", "gRPC listen address")
 		providerService    = flag.String("provider", "softhsm", "KMS provider to connect to (hvault, softhsm, tpm)")
 		providerConfigFile = flag.String("configfile", "/opt/kleidi/config.json", "Provider config file pat")
-		debugMode          = flag.Bool("debugmode", false, "Enable debug mode")
 	)
-
-	// Parsing environment variables.
-	flag.Parse()
 
 	// Setting up klog
 	klog.InitFlags(nil)
-	
-	klog.Info("Kleidi", "v"+kleidiVersion, "KMS Provider Plugin for Kubernetes.")
+	flag.Set("v", "2") 
+	flag.Parse()
+
+	klog.Info("----------------------------------------------------------------")
+	klog.InfoS("Kleidi", "v", kleidiVersion, "KMS Provider Plugin for Kubernetes.")
 	klog.Info("License Apache 2.0 - https://github.com/beezy-dev/kleidi")
+	klog.Info("----------------------------------------------------------------")
+	klog.V(2).Info("/!\\ Debugging mode activated - Do not use in Production /!\\")
+	klog.V(2).Info("----------------------------------------------------------------")
+
 
 	// Validating the socket location.
 	addr, err := utils.ValidateListenAddr(*listenAddr)
 	if err != nil {
-		log.Fatalln("EXIT: flag -listen set to", *listenAddr, "failed with error:\n", err.Error())
+		klog.Fatal("EXIT: flag -listen set to", *listenAddr, "failed with error:\n", err.Error())
 	}
 
 	// Checking and cleaning an existing socket in case of ungraceful shutdown.
 	if cleanup := os.Remove(addr); cleanup != nil && !os.IsNotExist(cleanup) {
-		log.Fatalln("EXIT: unable to delete existing socket file", addr, "from directory!")
+		klog.Fatal("EXIT: unable to delete existing socket file", addr, "from directory!")
 	}
 
 	// Validating the provider.
 	provider, err := utils.ValidateProvider(*providerService)
 	if err != nil {
-		log.Fatalln("EXIT: flag -provider set to", provider, "failed with error:\n", err.Error())
+		klog.Fatal("EXIT: flag -provider set to", provider, "failed with error:\n", err.Error())
 	}
 
 	// Validating the provider config.
 	providerConfig, err := utils.ValidateConfigfile(*providerConfigFile)
 	if err != nil {
-		log.Fatalln("EXIT: flag -configfile set to", providerConfig, "failed with error:\n", err.Error())
+		klog.Fatal("EXIT: flag -configfile set to", providerConfig, "failed with error:\n", err.Error())
 	}
-
-	debug := *debugMode
 
 	//Starting the appropriate provider once previously validated.
 	//REFACTOR to a simple interface
 
-	utils.StartProvider(addr, provider, providerConfig, debug)
+	utils.StartProvider(addr, provider, providerConfig)
 
 }

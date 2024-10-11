@@ -36,7 +36,7 @@ type hvaultRemoteService struct {
 	Address    string `json:"address"`
 }
 
-func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
+func NewVaultClientRemoteService(configFilePath string, addr string) (service.Service, error) {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalln("EXIT:ctx: failed to read vault config file with error:\n", err.Error())
@@ -45,10 +45,10 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 		log.Fatalln("EXIT:keyID len: invalid keyID")
 	}
 
-	if debug {
-		log.Println("DEBUG:--------------------------------------------------")
-		log.Println("DEBUG: verifying keyID:", keyID)
-	}
+//	if debug {
+//		log.Println("DEBUG:--------------------------------------------------")
+//		log.Println("DEBUG: verifying keyID:", keyID)
+//	}
 
 	// vaultService := &hvaultRemoteService{
 	// 	// keyID: keyID,
@@ -56,34 +56,34 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	// }
 
 	vaultService := &hvaultRemoteService{}
-	vaultService.Debug = debug
+//	vaultService.Debug = debug
 	vaultService.UnixSock = addr
 	json.Unmarshal(([]byte(ctx)), &vaultService)
 
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
-	keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
+	// keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
 
-	if debug {
-		log.Println("DEBUG:--------------------------------------------------")
-		log.Println("DEBUG: unmarshal JSON values:",
-			"\n                    -> vaultService.debug", vaultService.Debug,
-			"\n                    -> vaultService.Address:", vaultService.Address,
-			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
-			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
-			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
-			"\n                    -> keypath:", keypath)
-	}
+//	if debug {
+//		log.Println("DEBUG:--------------------------------------------------")
+//		log.Println("DEBUG: unmarshal JSON values:",
+//			"\n                    -> vaultService.debug", vaultService.Debug,
+//			"\n                    -> vaultService.Address:", vaultService.Address,
+//			"\n                    -> vaultService.Transitkey:", vaultService.Transitkey,
+//			"\n                    -> vaultService.Vaultrole:", vaultService.Vaultrole,
+//			"\n                    -> vaultService.Namespace:", vaultService.Namespace,
+//			"\n                    -> keypath:", keypath)
+//	}
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
-		if debug {
-			log.Println("DEBUG:--------------------------------------------------")
-			log.Println("DEBUG:client: json.Unmarshal output from configFile:", "\n vaultService.Address:", vaultService.Address)
-			log.Println("DEBUG:--------------------------------------------------")
-		}
-		log.Fatalln("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
+//		if debug {
+//			log.Println("DEBUG:--------------------------------------------------")
+//			log.Println("DEBUG:client: json.Unmarshal output from configFile:", "\n vaultService.Address:", vaultService.Address)
+//			log.Println("DEBUG:--------------------------------------------------")
+//		}
+//		log.Fatalln("EXIT:client: failed to initialize Vault client with error:\n", err.Error())
 	}
 
 	k8sAuth, err := auth.NewKubernetesAuth(
@@ -91,12 +91,12 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	)
 
 	if err != nil {
-		if debug {
-			log.Println("DEBUG:--------------------------------------------------")
-			log.Println("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
-			log.Println("DEBUG:--------------------------------------------------")
-		}
-		log.Fatalln("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
+//		if debug {
+//			log.Println("DEBUG:--------------------------------------------------")
+//			log.Println("DEBUG:k8sAuth: json.Unmarshal output from configFile:", "\n vaultService.Vaultrole:", vaultService.Vaultrole)
+//			log.Println("DEBUG:--------------------------------------------------")
+//		}
+//		log.Fatalln("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error:\n", err.Error())
 	}
 
 	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)
@@ -111,7 +111,6 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	// 	Client: client,
 	// }
 	vaultService.Client = client
-
 	client.SetNamespace(vaultService.Namespace)
 
 	// obtain latest version of the transit key and create a key ID for it
@@ -136,19 +135,19 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
 
-	if s.Debug {
-		log.Println("DEBUG:--------------------------------------------------")
-		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
-		log.Println("DEBUG:--------------------------------------------------")
-	}
+//	if s.Debug {
+//		log.Println("DEBUG:--------------------------------------------------")
+//		log.Println("DEBUG: unencrypted payload:", string([]byte(plaintext)))
+//		log.Println("DEBUG:--------------------------------------------------")
+//	}
 
-	log.Println("DEBUG:--------------------------------------------------")
-	log.Println("DEBUG: unmarshal JSON values:",
-		"\n                    -> vaultService.debug", s.Debug,
-		"\n                    -> vaultService.Address:", s.Address,
-		"\n                    -> vaultService.Transitkey:", s.Transitkey,
-		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
-		"\n                    -> vaultService.Namespace:", s.Namespace)
+//	log.Println("DEBUG:--------------------------------------------------")
+//	log.Println("DEBUG: unmarshal JSON values:",
+//		"\n                    -> vaultService.debug", s.Debug,
+//		"\n                    -> vaultService.Address:", s.Address,
+//		"\n                    -> vaultService.Transitkey:", s.Transitkey,
+//		"\n                    -> vaultService.Vaultrole:", s.Vaultrole,
+//		"\n                    -> vaultService.Namespace:", s.Namespace)
 
 	enckeypath := fmt.Sprintf("transit/encrypt/%s", s.Transitkey)
 	// keypath := "transit/encrypt/kleidi"
