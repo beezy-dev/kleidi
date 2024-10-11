@@ -12,7 +12,7 @@ spec:
   hostNetwork: true
   containers:
     - name: kleidi-kms-plugin
-      image: ghcr.io/beezy-dev/kleidi-kms-plugin:vault-781c292   #b5f665d
+      image: ghcr.io/beezy-dev/kleidi-vault:vault-d04e6ef   #b5f665d
       imagePullPolicy: Always
       args:
         - -provider=hvault

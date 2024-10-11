@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-        "k8s.io/klog/v2"
+	"k8s.io/klog/v2"
 )
 
 func ValidateListenAddr(listenAddr string) (string, error) {
@@ -33,7 +33,7 @@ func ValidateListenAddr(listenAddr string) (string, error) {
 		return strings.TrimPrefix(url.Path, "/"), nil
 	}
 
-	klog.Info("flag -listen set to", listenAddr)
+	klog.InfoS("ListenAddr set as", "-listen", listenAddr)
 	return url.Path, nil
 }
 
@@ -44,7 +44,7 @@ func ValidateProvider(providerService string) (string, error) {
 		return providerService, fmt.Errorf("/!\\ flag -provider is not supported. Only %v are valid options", providerServices)
 	}
 
-	klog.Info("flag -provider set to", providerService)
+	klog.InfoS("Provider set as", "-provider", providerService)
 	return providerService, nil
 }
 
@@ -54,7 +54,7 @@ func ValidateConfigfile(providerConfigFile string) (string, error) {
 		return providerConfigFile, fmt.Errorf("/!\\ can not be an empty string")
 	}
 
-	klog.Info("flag -configfile set to", providerConfigFile)
+	klog.InfoS("ConfigFile set as", "-configfile", providerConfigFile)
 	return providerConfigFile, nil
 
 }

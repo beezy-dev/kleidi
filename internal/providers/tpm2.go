@@ -1,11 +1,9 @@
 package providers
 
-import (
-	"log"
-)
+import "k8s.io/klog/v2"
 
 func TmpPlaceholder() {
-	log.Fatalln("/!\\ implementation in progress - stay tune!")
+	klog.Fatal("/!\\ implementation in progress - stay tune!")
 }
 
 // var (
