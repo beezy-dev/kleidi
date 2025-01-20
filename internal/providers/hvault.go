@@ -30,24 +30,51 @@ type hvaultRemoteService struct {
 	UnixSock    string
 	LatestKeyID string
 	// keyID      string
-	Namespace  string `json:"namespace"`
+	Namespace  string `json:"namespace,omitempty"`
 	Transitkey string `json:"transitkey"`
 	Vaultrole  string `json:"vaultrole"`
 	Address    string `json:"address"`
+	K8sAuthPath string `json:"k8sauthpath,omitempty"`
+	TransitPath string `json:"transitpath,omitempty"`
 }
 
-func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
+func readConfig(configFilePath string) *hvaultRemoteService {
 	ctx, err := os.ReadFile(configFilePath)
 	if err != nil {
 		zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
 	}
-	if len(keyID) == 0 {
-		zap.L().Fatal("EXIT:keyID len: invalid keyID")
+	vaultService := &hvaultRemoteService{}
+	err = json.Unmarshal(([]byte(ctx)), &vaultService)
+	if err != nil {
+		zap.L().Fatal("EXIT:ctx: invalid JSON config file: " + err.Error())
+	}
+	return vaultService
+}
+
+func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
+	// ctx, err := os.ReadFile(configFilePath)
+	// if err != nil {
+	// 	zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
+	// }
+	// if len(keyID) == 0 {
+	// 	zap.L().Fatal("EXIT:keyID len: invalid keyID")
+	// }
+
+	// vaultService := &hvaultRemoteService{}
+	// vaultService.UnixSock = addr
+	// json.Unmarshal(([]byte(ctx)), &vaultService)
+
+	vaultService := readConfig(configFilePath)
+	// use the default path if unspecified/left empty
+	if vaultService.K8sAuthPath == "" {
+		vaultService.K8sAuthPath = "kubernetes"
 	}
 
-	vaultService := &hvaultRemoteService{}
+	if vaultService.TransitPath == "" {
+		vaultService.TransitPath = "transit"
+	}
+
 	vaultService.UnixSock = addr
-	json.Unmarshal(([]byte(ctx)), &vaultService)
 
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
@@ -57,7 +84,9 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	zap.L().Debug("Config loaded:", zap.String("Vault address", vaultService.Address),
 		zap.String("Transit key name", vaultService.Transitkey),
 		zap.String("Vault role", vaultService.Vaultrole),
-		zap.String("Vault namespace", vaultService.Namespace))
+		zap.String("Vault namespace", vaultService.Namespace),
+		zap.String("K8S Auth mount path", vaultService.K8sAuthPath),
+		zap.String("Transit engine mount path", vaultService.TransitPath))
 
 	client, err := api.NewClient(vaultconfig)
 	if err != nil {
@@ -66,6 +95,7 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 
 	k8sAuth, err := auth.NewKubernetesAuth(
 		vaultService.Vaultrole,
+		auth.WithMountPath(vaultService.K8sAuthPath),
 	)
 
 	if err != nil {
@@ -106,7 +136,7 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 }
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
-	enckeypath := fmt.Sprintf("transit/encrypt/%s", s.Transitkey)
+	enckeypath := fmt.Sprintf("%s/encrypt/%s", s.TransitPath, s.Transitkey)
 	encodepayload := map[string]interface{}{
 		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
 	}
@@ -143,7 +173,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
 
-	decryptkeypath := fmt.Sprintf("transit/decrypt/%s", s.Transitkey)
+	decryptkeypath := fmt.Sprintf("%s/decrypt/%s", s.TransitPath, s.Transitkey)
 
 	encryptedPayload := map[string]interface{}{
 		"ciphertext": string([]byte(req.Ciphertext)),
@@ -241,7 +271,7 @@ func (s *hvaultRemoteService) createStatusResponse(healthz string) *service.Stat
 }
 
 func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, error) {
-	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("transit/keys/%s", s.Transitkey))
+	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
 	if err != nil {
 		// no transit key or no token
 		return nil, err
