@@ -3,44 +3,6 @@
 		{
 			"results": [
 				{
-					"fixes": [
-						{
-							"artifactChanges": null,
-							"description": {}
-						}
-					],
-					"level": "error",
-					"locations": [
-						{
-							"physicalLocation": {
-								"artifactLocation": {
-									"uri": "internal/providers/pkcs11.go"
-								},
-								"region": {
-									"endColumn": 20,
-									"endLine": 102,
-									"snippet": {
-										"text": "return s.aead.Open(nil, data[:nonceSize], data[nonceSize:], []byte(s.keyID))"
-									},
-									"sourceLanguage": "go",
-									"startColumn": 20,
-									"startLine": 102
-								}
-							}
-						}
-					],
-					"message": {
-						"text": "Use of hardcoded IV/nonce for encryption by passing hardcoded slice/array"
-					},
-					"ruleId": "G407"
-				},
-				{
-					"fixes": [
-						{
-							"artifactChanges": null,
-							"description": {}
-						}
-					],
 					"level": "error",
 					"locations": [
 						{
@@ -67,12 +29,6 @@
 					"ruleId": "G407"
 				},
 				{
-					"fixes": [
-						{
-							"artifactChanges": null,
-							"description": {}
-						}
-					],
 					"level": "error",
 					"locations": [
 						{
@@ -82,13 +38,13 @@
 								},
 								"region": {
 									"endColumn": 14,
-									"endLine": 40,
+									"endLine": 42,
 									"snippet": {
 										"text": "ctx, err := os.ReadFile(configFilePath)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 14,
-									"startLine": 40
+									"startLine": 42
 								}
 							}
 						}
@@ -97,38 +53,6 @@
 						"text": "Potential file inclusion via variable"
 					},
 					"ruleId": "G304"
-				},
-				{
-					"fixes": [
-						{
-							"artifactChanges": null,
-							"description": {}
-						}
-					],
-					"level": "warning",
-					"locations": [
-						{
-							"physicalLocation": {
-								"artifactLocation": {
-									"uri": "internal/providers/hvault.go"
-								},
-								"region": {
-									"endColumn": 2,
-									"endLine": 61,
-									"snippet": {
-										"text": "json.Unmarshal(([]byte(ctx)), \u0026vaultService)"
-									},
-									"sourceLanguage": "go",
-									"startColumn": 2,
-									"startLine": 61
-								}
-							}
-						}
-					],
-					"message": {
-						"text": "Errors unhandled."
-					},
-					"ruleId": "G104"
 				}
 			],
 			"taxonomies": [
@@ -167,17 +91,6 @@
 							"shortDescription": {
 								"text": "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
 							}
-						},
-						{
-							"fullDescription": {
-								"text": "The software does not properly anticipate or handle exceptional conditions that rarely occur during normal operation of the software."
-							},
-							"guid": "7df38d1d-038e-3ced-8601-8d9265b90a25",
-							"helpUri": "https://cwe.mitre.org/data/definitions/703.html",
-							"id": "703",
-							"shortDescription": {
-								"text": "Improper Check or Handling of Exceptional Conditions"
-							}
 						}
 					],
 					"version": "4.4"
@@ -189,44 +102,6 @@
 					"informationUri": "https://github.com/securego/gosec/",
 					"name": "gosec",
 					"rules": [
-						{
-							"defaultConfiguration": {
-								"level": "warning"
-							},
-							"fullDescription": {
-								"text": "Errors unhandled."
-							},
-							"help": {
-								"text": "Errors unhandled.\nSeverity: LOW\nConfidence: HIGH\n"
-							},
-							"id": "G104",
-							"name": "Improper Check or Handling of Exceptional Conditions",
-							"properties": {
-								"precision": "high",
-								"tags": [
-									"security",
-									"LOW"
-								]
-							},
-							"relationships": [
-								{
-									"kinds": [
-										"superset"
-									],
-									"target": {
-										"guid": "7df38d1d-038e-3ced-8601-8d9265b90a25",
-										"id": "703",
-										"toolComponent": {
-											"guid": "f2856fc0-85b7-373f-83e7-6f8582243547",
-											"name": "CWE"
-										}
-									}
-								}
-							],
-							"shortDescription": {
-								"text": "Errors unhandled."
-							}
-						},
 						{
 							"defaultConfiguration": {
 								"level": "error"
@@ -304,14 +179,14 @@
 							}
 						}
 					],
-					"semanticVersion": "dev",
+					"semanticVersion": "2.22.1",
 					"supportedTaxonomies": [
 						{
 							"guid": "f2856fc0-85b7-373f-83e7-6f8582243547",
 							"name": "CWE"
 						}
 					],
-					"version": "dev"
+					"version": "2.22.1"
 				}
 			}
 		}
