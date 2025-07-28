@@ -1,7 +1,7 @@
-FROM docker.io/library/golang:1.22.0-bullseye AS build
+FROM docker.io/library/golang:1.24.5-bookworm AS build
 
 ARG VERSION
-ENV VERSION $VERSION
+ENV VERSION=$VERSION
 WORKDIR /work
 
 # Copy the source
