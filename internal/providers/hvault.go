@@ -14,7 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 
 	"github.com/hashicorp/vault/api"
 	"k8s.io/kms/pkg/service"
@@ -114,27 +114,15 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 }
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
-	enckeypath := fmt.Sprintf("%s/encrypt/%s", s.TransitPath, s.Transitkey)
-	encodepayload := map[string]interface{}{
-		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
-	}
-
-	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	zap.L().Debug("Received encrypt request with UID: " + uid)
+	enresult, err := s.encrypt(ctx, plaintext)
 	if err != nil {
-		zap.L().Debug("encrypt:plaintext: " + string([]byte(plaintext)) +
-			" keypath: " + enckeypath + "\nencodepayload: " + fmt.Sprintf("%v", encodepayload))
-		//zap.L().Fatal("EXIT:encrypt: with error: " + err.Error())
-		zap.L().Error("encrypt: with error: " + err.Error())
-		return nil, err
-	}
-	enresult, ok := encrypt.Data["ciphertext"].(string)
-	if !ok {
 		zap.L().Error("enresult: invalid response")
 		return nil, errors.New("Invalid response")
 	}
 
 	return &service.EncryptResponse{
-		Ciphertext: []byte(enresult),
+		Ciphertext: enresult,
 		KeyID:      s.LatestKeyID,
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
@@ -142,7 +130,26 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}, nil
 }
 
+func (s *hvaultRemoteService) encrypt(ctx context.Context, plaintext []byte) ([]byte, error) {
+	enckeypath := fmt.Sprintf("%s/encrypt/%s", s.TransitPath, s.Transitkey)
+	encodepayload := map[string]interface{}{
+		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
+	}
+	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	if err != nil {
+		zap.L().Error("encrypt: error: " + err.Error())
+		return nil, err
+	}
+	enresult, ok := encrypt.Data["ciphertext"].(string)
+	if !ok {
+		zap.L().Error("enresult: invalid response")
+		return nil, errors.New("Invalid response")
+	}
+	return []byte(enresult), nil
+}
+
 func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+	zap.L().Debug("Received decrypt request with UID: " + uid)
 	if len(req.Annotations) != 1 {
 		zap.L().Error("len:annotations: " + fmt.Sprintf("%v", req.Annotations))
 		return nil, fmt.Errorf("/!\\ invalid annotations")
@@ -150,33 +157,30 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
+	return s.decrypt(ctx, req.Ciphertext)
+}
 
+func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([]byte, error) {
 	decryptkeypath := fmt.Sprintf("%s/decrypt/%s", s.TransitPath, s.Transitkey)
-
 	encryptedPayload := map[string]interface{}{
-		"ciphertext": string([]byte(req.Ciphertext)),
+		"ciphertext": string(ciphertext),
 	}
-
 	encryptedResponse, err := s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
 	if err != nil {
 		zap.L().Error("encryptedResponse: with error: " + err.Error())
 		return nil, err
 	}
-
 	response, ok := encryptedResponse.Data["plaintext"].(string)
 	if !ok {
 		zap.L().Error("response: invalid response")
 		return nil, errors.New("response: invalid response")
 	}
-
 	decodepayload, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {
 		zap.L().Error("decodepayload: with error: " + err.Error())
 		return nil, err
 	}
-
 	return decodepayload, nil
-
 }
 
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
@@ -199,7 +203,7 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 		zap.L().Error("ERROR:Status: unhealthy: " + err.Error())
 		return s.createStatusResponse(healthNOK), err
 	}
-
+	// all OK
 	return s.createStatusResponse(healthOK), nil
 }
 
@@ -210,32 +214,21 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 		zap.L().Fatal("ERROR:health:token: token validity check failed: " + err.Error())
 		return err
 	}
-	// check encrypt/decrypt if operation can be performed correctly
-	enc, err := s.Encrypt(ctx, fmt.Sprintf("health-enc-%s", strconv.FormatInt(time.Now().Unix(), 10)), []byte(healthy))
+	// check Encryption as Service functionality (transit)
+	enc, err := s.encrypt(ctx, []byte(healthy))
 	if err != nil {
 		zap.L().Error("Health: encrypt failed: " + err.Error())
 		return err
 	}
-
-	dec, err := s.Decrypt(ctx, fmt.Sprintf("health-dec-%s", strconv.FormatInt(time.Now().Unix(), 10)), &service.DecryptRequest{
-		Ciphertext: enc.Ciphertext,
-		KeyID:      s.LatestKeyID,
-		Annotations: map[string][]byte{
-			annotationKey: []byte("1"),
-		},
-	})
-
+	dec, err := s.decrypt(ctx, []byte(enc))
 	if err != nil {
 		return errors.New("Health: decrypt failed: " + err.Error())
 	}
-
 	// decrypted plaintext does not match
 	if healthy != string(dec) {
 		return errors.New("Health check failed: decrypt does not match")
 	}
-
 	zap.L().Info("Health: Health check OK")
-
 	return nil
 }
 
