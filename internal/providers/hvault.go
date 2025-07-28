@@ -26,9 +26,7 @@ var _ service.Service = &hvaultRemoteService{}
 type hvaultRemoteService struct {
 	*api.Client
 
-	UnixSock    string
 	LatestKeyID string
-	// keyID      string
 	Namespace   string `json:"namespace"`
 	Transitkey  string `json:"transitkey"`
 	Vaultrole   string `json:"vaultrole"`
@@ -74,10 +72,8 @@ func setupClient(cfg *api.Config, ns string, method string, roleName string, mou
 	return client
 }
 
-func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
+func NewVaultClientRemoteService(configFilePath string) (service.Service, error) {
 	vaultService := readConfig(configFilePath)
-	vaultService.UnixSock = addr
-
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
@@ -184,10 +180,6 @@ func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([
 }
 
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
-	// check if unix socket is still present
-	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
-		zap.L().Fatal("ERROR:status: socket removed: " + err.Error())
-	}
 	// get transit key, obtain the latest version of the transit key
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {

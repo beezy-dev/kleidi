@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"errors"
 
 	"github.com/beezy-dev/kleidi/internal/providers"
 	"k8s.io/kms/pkg/service"
@@ -14,6 +15,7 @@ import (
 
 const (
 	socketTimeOut = 10 * time.Second
+	socketCheckInterval int = 10
 )
 
 func StartProvider(addr, provider, providerConfig string, debug bool) {
@@ -54,7 +56,7 @@ func startSofthsm(addr, provider, providerConfig string, debug bool) {
 
 func startHvault(addr, provider, providerConfig string, debug bool) {
 
-	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig, addr, debug)
+	remoteKMSService, err := providers.NewVaultClientRemoteService(providerConfig)
 	if err != nil {
 		zap.L().Fatal("EXIT: remote KMS provider [" + provider + "] failed with error: " + err.Error())
 	}
@@ -71,7 +73,26 @@ func startHvault(addr, provider, providerConfig string, debug bool) {
 		}
 	}()
 
+	// periodically check unix socket if it exists
+	// shutdown if it got removed
+	sockCheckDone := make(chan bool)
+	go func(done chan bool, unixSock string){
+		ticker := time.NewTicker(time.Duration(socketCheckInterval) * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				if _, err := os.Stat(unixSock); errors.Is(err, os.ErrNotExist) {
+					zap.L().Fatal("EXIT: socket removed: " + err.Error())
+				}
+			}
+		}
+	}(sockCheckDone, addr)
+
 	<-ctx.Done()
+	sockCheckDone <- true
 	grpcService.Shutdown()
 
 }
