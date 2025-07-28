@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/vault/api"
-	auth "github.com/hashicorp/vault/api/auth/kubernetes"
 	"k8s.io/kms/pkg/service"
 	"go.uber.org/zap"
 )
@@ -30,92 +29,72 @@ type hvaultRemoteService struct {
 	UnixSock    string
 	LatestKeyID string
 	// keyID      string
-	Namespace  string `json:"namespace,omitempty"`
-	Transitkey string `json:"transitkey"`
-	Vaultrole  string `json:"vaultrole"`
-	Address    string `json:"address"`
-	K8sAuthPath string `json:"k8sauthpath,omitempty"`
-	TransitPath string `json:"transitpath,omitempty"`
+	Namespace   string `json:"namespace"`
+	Transitkey  string `json:"transitkey"`
+	Vaultrole   string `json:"vaultrole"`
+	Address     string `json:"address"`
+	AuthPath    string `json:"authpath"`
+	TransitPath string `json:"transitpath"`
+	AuthMethod  string `json:"authmethod"`
 }
 
 func readConfig(configFilePath string) *hvaultRemoteService {
-	ctx, err := os.ReadFile(configFilePath)
+	data, err := os.ReadFile(configFilePath)
 	if err != nil {
 		zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
 	}
 	vaultService := &hvaultRemoteService{}
-	err = json.Unmarshal(([]byte(ctx)), &vaultService)
+	err = json.Unmarshal(([]byte(data)), &vaultService)
 	if err != nil {
 		zap.L().Fatal("EXIT:ctx: invalid JSON config file: " + err.Error())
+	}
+	if vaultService.TransitPath == "" {
+		vaultService.TransitPath = "transit"
 	}
 	return vaultService
 }
 
+func setupClient(cfg *api.Config, ns string, method string, roleName string, mountPath string) *api.Client {	
+	authMethod, err := createAuthMethod(method, roleName, mountPath)
+	if err != nil {
+		zap.L().Fatal("EXIT:client: failed to create auth method: " + err.Error())
+	}
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		zap.L().Fatal("EXIT:client: failed to initialize Vault client with error: " + err.Error())
+	}
+	client.SetNamespace(ns)
+	authInfo, err := client.Auth().Login(context.Background(), authMethod)
+	if err != nil {
+		zap.L().Fatal("EXIT:authInfo: unable to log in with error:" + err.Error())
+	}
+	if authInfo == nil {
+		zap.L().Fatal("EXIT:authInfo: no auth info was returned after login")
+	}
+	return client
+}
+
 func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
-	// ctx, err := os.ReadFile(configFilePath)
-	// if err != nil {
-	// 	zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
-	// }
-	// if len(keyID) == 0 {
-	// 	zap.L().Fatal("EXIT:keyID len: invalid keyID")
-	// }
-
-	// vaultService := &hvaultRemoteService{}
-	// vaultService.UnixSock = addr
-	// json.Unmarshal(([]byte(ctx)), &vaultService)
-
 	vaultService := readConfig(configFilePath)
-	// use the default path if unspecified/left empty
-	if vaultService.K8sAuthPath == "" {
-		vaultService.K8sAuthPath = "kubernetes"
-	}
-
-	if vaultService.TransitPath == "" {
-		vaultService.TransitPath = "transit"
-	}
-
 	vaultService.UnixSock = addr
 
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
 
-	// keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
-
 	zap.L().Debug("Config loaded:", zap.String("Vault address", vaultService.Address),
 		zap.String("Transit key name", vaultService.Transitkey),
 		zap.String("Vault role", vaultService.Vaultrole),
 		zap.String("Vault namespace", vaultService.Namespace),
-		zap.String("K8S Auth mount path", vaultService.K8sAuthPath),
-		zap.String("Transit engine mount path", vaultService.TransitPath))
-
-	client, err := api.NewClient(vaultconfig)
-	if err != nil {
-		zap.L().Fatal("EXIT:client: failed to initialize Vault client with error: " + err.Error())
-	}
-
-	k8sAuth, err := auth.NewKubernetesAuth(
-		vaultService.Vaultrole,
-		auth.WithMountPath(vaultService.K8sAuthPath),
+		zap.String("Auth method", vaultService.AuthMethod),
+		zap.String("Auth mount path", vaultService.AuthPath),
+		zap.String("Transit engine mount path", vaultService.TransitPath),
 	)
-
-	if err != nil {
-		zap.L().Fatal("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error: " + err.Error())
-	}
-
-	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)
-	if err != nil {
-		zap.L().Fatal("EXIT:authInfo: unable to log in with Kubernetes auth with error:" + err.Error())
-	}
-	if authInfo == nil {
-		zap.L().Fatal("EXIT:authInfo: no kubernetes auth info was returned after login")
-	}
-
-	// vaultService = &hvaultRemoteService{
-	// 	Client: client,
-	// }
-	vaultService.Client = client
-
-	client.SetNamespace(vaultService.Namespace)
+	// setup client with selected auth method
+	vaultService.Client = setupClient(vaultconfig,
+		vaultService.Namespace,
+		vaultService.AuthMethod, 
+		vaultService.Vaultrole, 
+		vaultService.AuthPath)
 
 	// obtain latest version of the transit key and create a key ID for it
 	key, err := vaultService.GetTransitKey(context.Background())
@@ -125,11 +104,10 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	vaultService.LatestKeyID = createLatestTransitKeyId(key)
 	zap.L().Info("Received key ID on startup: " + vaultService.LatestKeyID)
 
-	// initial token check - it can happen that k8s restarted ??
+	// initial token check
 	err = vaultService.CheckTokenValidity(context.Background())
 	if err != nil {
 		zap.L().Fatal("EXIT:token: could not check token validity: " + err.Error())
-		return vaultService, err
 	}
 
 	return vaultService, nil
