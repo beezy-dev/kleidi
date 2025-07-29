@@ -36,6 +36,16 @@ type hvaultRemoteService struct {
 	AuthMethod  string `json:"authmethod"`
 }
 
+func fatalOrErr(err error) error {
+	// it can happen that token gets ivalidated - shutdown in these cases
+	// for others it just "flows through"
+	if strings.Contains(err.Error(), "invalid token") {
+		zap.L().Fatal("EXIT:token: invalid token, restarting: " + err.Error())
+		return err
+	}
+	return err
+}
+
 func readConfig(configFilePath string) *hvaultRemoteService {
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
@@ -134,7 +144,7 @@ func (s *hvaultRemoteService) encrypt(ctx context.Context, plaintext []byte) ([]
 	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
 	if err != nil {
 		zap.L().Error("encrypt: error: " + err.Error())
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	enresult, ok := encrypt.Data["ciphertext"].(string)
 	if !ok {
@@ -164,7 +174,7 @@ func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([
 	encryptedResponse, err := s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
 	if err != nil {
 		zap.L().Error("encryptedResponse: with error: " + err.Error())
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	response, ok := encryptedResponse.Data["plaintext"].(string)
 	if !ok {
@@ -203,7 +213,6 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 	// check if it has valid token lease (Vault)
 	err := s.CheckTokenValidity(ctx)
 	if err != nil {
-		zap.L().Fatal("ERROR:health:token: token validity check failed: " + err.Error())
 		return err
 	}
 	// check Encryption as Service functionality (transit)
@@ -237,7 +246,7 @@ func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, e
 	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
 	if err != nil {
 		// no transit key or no token
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	zap.L().Debug("Got transit key: " + fmt.Sprintf("%v", map[string]interface{}{
 		"latest_version":         key.Data["latest_version"],
@@ -265,10 +274,7 @@ func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, e
 	path := fmt.Sprintf("auth/token/lookup-self")
 	token, err := s.Client.Logical().ReadWithContext(ctx, path)
 	if err != nil {
-		if strings.Contains(err.Error(), "invalid token") {
-			zap.L().Fatal("EXIT:token: invalid token, restarting: " + err.Error())
-		}
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	return token, nil
 }
@@ -323,10 +329,11 @@ func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl in
 	if err != nil {
 		// check why the token cannot be renewed
 		// if e.g. permission denied -> fatal (token modified, policy changed ..)
-		if strings.Contains(err.Error(), "invalid token") {
-			zap.L().Fatal("EXIT:token: unable to renew token: " + err.Error())
-		}
-		return err
+		return fatalOrErr(err)
 	}
 	return nil
+}
+
+func  (s *hvaultRemoteService) reloginOrDie(ctx context.Context) {
+	s.Client.Login()
 }
