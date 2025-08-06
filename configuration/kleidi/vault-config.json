@@ -2,5 +2,8 @@
   "namespace": "",
   "transitkey": "kleidi",
   "vaultrole": "kleidi",
-  "address": "http://172.20.10.9:8200" 
+  "address": "http://172.20.10.9:8200",
+  "transitpath": "transit",
+  "authmethod": "k8s",
+  "authpath": "kubernetes"
 }

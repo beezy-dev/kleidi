@@ -14,17 +14,22 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	//"time"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 	"k8s.io/kms/pkg/service"
 	"go.uber.org/zap"
 )
 
+const (
+	retrySleep = 150*time.Millisecond
+)
+
 var _ service.Service = &hvaultRemoteService{}
 
 type hvaultRemoteService struct {
 	*api.Client
+	ClientAuthMethod api.AuthMethod
 
 	LatestKeyID string
 	Namespace   string `json:"namespace"`
@@ -62,7 +67,7 @@ func readConfig(configFilePath string) *hvaultRemoteService {
 	return vaultService
 }
 
-func setupClient(cfg *api.Config, ns string, method string, roleName string, mountPath string) *api.Client {	
+func setupClient(cfg *api.Config, ns string, method string, roleName string, mountPath string) (*api.Client, api.AuthMethod) {	
 	authMethod, err := createAuthMethod(method, roleName, mountPath)
 	if err != nil {
 		zap.L().Fatal("EXIT:client: failed to create auth method: " + err.Error())
@@ -79,7 +84,7 @@ func setupClient(cfg *api.Config, ns string, method string, roleName string, mou
 	if authInfo == nil {
 		zap.L().Fatal("EXIT:authInfo: no auth info was returned after login")
 	}
-	return client
+	return client, authMethod
 }
 
 func NewVaultClientRemoteService(configFilePath string) (service.Service, error) {
@@ -96,7 +101,7 @@ func NewVaultClientRemoteService(configFilePath string) (service.Service, error)
 		zap.String("Transit engine mount path", vaultService.TransitPath),
 	)
 	// setup client with selected auth method
-	vaultService.Client = setupClient(vaultconfig,
+	vaultService.Client, vaultService.ClientAuthMethod = setupClient(vaultconfig,
 		vaultService.Namespace,
 		vaultService.AuthMethod, 
 		vaultService.Vaultrole, 
@@ -141,7 +146,9 @@ func (s *hvaultRemoteService) encrypt(ctx context.Context, plaintext []byte) ([]
 	encodepayload := map[string]interface{}{
 		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
 	}
-	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	encrypt, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	})
 	if err != nil {
 		zap.L().Error("encrypt: error: " + err.Error())
 		return nil, fatalOrErr(err)
@@ -171,7 +178,9 @@ func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([
 	encryptedPayload := map[string]interface{}{
 		"ciphertext": string(ciphertext),
 	}
-	encryptedResponse, err := s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
+	encryptedResponse, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
+	})
 	if err != nil {
 		zap.L().Error("encryptedResponse: with error: " + err.Error())
 		return nil, fatalOrErr(err)
@@ -243,9 +252,11 @@ func (s *hvaultRemoteService) createStatusResponse(healthz string) *service.Stat
 }
 
 func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, error) {
-	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
+	// retry read 3x with 150 millisec delay between them
+	key, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
+	})
 	if err != nil {
-		// no transit key or no token
 		return nil, fatalOrErr(err)
 	}
 	zap.L().Debug("Got transit key: " + fmt.Sprintf("%v", map[string]interface{}{
@@ -272,7 +283,10 @@ func createLatestTransitKeyId(key *api.Secret) string {
 func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, error) {
 	// requires policy to have: "auth/token/lookup-self read and "auth/token/renew-self" update
 	path := fmt.Sprintf("auth/token/lookup-self")
-	token, err := s.Client.Logical().ReadWithContext(ctx, path)
+
+	token, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().ReadWithContext(ctx, path)
+	})
 	if err != nil {
 		return nil, fatalOrErr(err)
 	}
@@ -323,17 +337,47 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) error {
 func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl int) error {
 	// renews with the original creation_ttl
 	path := fmt.Sprintf("auth/token/renew-self")
-	_, err := s.Client.Logical().WriteWithContext(ctx, path, map[string]any{"data": map[string]any{
-		"ttl":       fmt.Sprintf("%d", creation_ttl),
-		"renewable": "true"}})
+	_, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().WriteWithContext(ctx, path, 
+			map[string]any{"data": map[string]any{
+				"ttl":       fmt.Sprintf("%d", creation_ttl),
+				"renewable": "true"}})
+	})
 	if err != nil {
-		// check why the token cannot be renewed
-		// if e.g. permission denied -> fatal (token modified, policy changed ..)
 		return fatalOrErr(err)
 	}
 	return nil
 }
 
-func  (s *hvaultRemoteService) reloginOrDie(ctx context.Context) {
-	s.Client.Login()
+func retryVaultOp[T any](s *hvaultRemoteService, ctx context.Context, amount int, sleepTime time.Duration, f func()(T, error)) (result T, err error) {
+	// Retries operation f() "amount", times, with "sleepTime" in between them.
+	// If operation cannot be performed due to e.g. expired login, try to login in again and retry.
+	// Applicable wherever read/write call to Vault is performed.
+	for i := 0; i < amount; i++ {
+		select {
+		case <-ctx.Done():
+			return result, ctx.Err()
+		default:
+			result, err = f()
+			if err != nil {
+				if strings.Contains(err.Error(), "invalid token") {
+					// re-login
+					authInfo, err := s.Client.Auth().Login(ctx, s.ClientAuthMethod)
+					if err != nil {
+						zap.L().Error("Error: Could not relogin: " + err.Error())
+					}
+					if authInfo == nil {
+						zap.L().Error("Error: Relogin received empty auth info")
+					}
+					// relogin OK
+				} // other error that cannot be solved by relogin: try calling f() again
+			} else {
+				// no error, no need to retry
+				zap.L().Debug("Operation succeded on attempt " + fmt.Sprintf("%d", i+1))
+				return result, nil
+			}
+			time.Sleep(sleepTime)
+		}
+	}
+	return result, err
 }
