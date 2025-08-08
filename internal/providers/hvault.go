@@ -170,7 +170,7 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
-	return s.decrypt(ctx, req.Ciphertext)
+	return s.decrypt(ctx, []byte(req.Ciphertext))
 }
 
 func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([]byte, error) {
@@ -230,7 +230,7 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 		zap.L().Error("Health: encrypt failed: " + err.Error())
 		return err
 	}
-	dec, err := s.decrypt(ctx, []byte(enc))
+	dec, err := s.decrypt(ctx, enc)
 	if err != nil {
 		return errors.New("Health: decrypt failed: " + err.Error())
 	}
@@ -362,12 +362,9 @@ func retryVaultOp[T any](s *hvaultRemoteService, ctx context.Context, amount int
 			if err != nil {
 				if strings.Contains(err.Error(), "invalid token") {
 					// re-login
-					authInfo, err := s.Client.Auth().Login(ctx, s.ClientAuthMethod)
+					_, err := s.Client.Auth().Login(ctx, s.ClientAuthMethod)
 					if err != nil {
 						zap.L().Error("Error: Could not relogin: " + err.Error())
-					}
-					if authInfo == nil {
-						zap.L().Error("Error: Relogin received empty auth info")
 					}
 					// relogin OK
 				} // other error that cannot be solved by relogin: try calling f() again
