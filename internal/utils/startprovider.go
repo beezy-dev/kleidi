@@ -76,7 +76,7 @@ func startHvault(addr, provider, providerConfig string, debug bool) {
 	// periodically check unix socket if it exists
 	// shutdown if it got removed
 	sockCheckDone := make(chan bool)
-	go func(done chan bool, unixSock string){
+	go func(done chan bool, unixSock string) {
 		ticker := time.NewTicker(time.Duration(socketCheckInterval) * time.Second)
 		defer ticker.Stop()
 		for {
