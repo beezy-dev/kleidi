@@ -12,6 +12,8 @@ RUN go mod download
 
 RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo cmd/kleidi/main.go
 
+RUN go test -v ./...
+
 FROM quay.io/centos/centos:stream9
 
 LABEL org.opencontainers.image.source=https://github.com/beezy-dev/kleidi 

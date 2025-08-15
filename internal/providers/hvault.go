@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -44,9 +43,10 @@ type hvaultRemoteService struct {
 func fatalOrErr(err error) error {
 	// it can happen that token gets ivalidated - shutdown in these cases
 	// for others it just "flows through"
-	if strings.Contains(err.Error(), "invalid token") {
-		zap.L().Fatal("EXIT:token: invalid token, restarting: " + err.Error())
-		return err
+	wrappedErr := WrapVaultError(err.Error())
+	if errors.Is(wrappedErr, ErrInvalidToken) {
+		zap.L().Fatal("EXIT:token: invalid token, restarting.")
+		return err		
 	}
 	return err
 }
@@ -360,13 +360,17 @@ func retryVaultOp[T any](s *hvaultRemoteService, ctx context.Context, amount int
 		default:
 			result, err = f()
 			if err != nil {
-				if strings.Contains(err.Error(), "invalid token") {
+				zap.L().Error("Got error: " + err.Error())
+				wrappedErr := WrapVaultError(err.Error())
+				if errors.Is(wrappedErr, ErrInvalidToken) {
 					// re-login
 					_, err := s.Client.Auth().Login(ctx, s.ClientAuthMethod)
 					if err != nil {
 						zap.L().Error("Error: Could not relogin: " + err.Error())
+					} else {
+						// relogin OK
+						zap.L().Debug("Relogin succesful.")
 					}
-					// relogin OK
 				} // other error that cannot be solved by relogin: try calling f() again
 			} else {
 				// no error, no need to retry
