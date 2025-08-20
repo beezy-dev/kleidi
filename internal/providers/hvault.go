@@ -13,109 +13,99 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/vault/api"
-	auth "github.com/hashicorp/vault/api/auth/kubernetes"
 	"k8s.io/kms/pkg/service"
 	"go.uber.org/zap"
+)
+
+const (
+	retrySleep = 150*time.Millisecond
 )
 
 var _ service.Service = &hvaultRemoteService{}
 
 type hvaultRemoteService struct {
 	*api.Client
+	ClientAuthMethod api.AuthMethod
 
-	UnixSock    string
 	LatestKeyID string
-	// keyID      string
-	Namespace  string `json:"namespace,omitempty"`
-	Transitkey string `json:"transitkey"`
-	Vaultrole  string `json:"vaultrole"`
-	Address    string `json:"address"`
-	K8sAuthPath string `json:"k8sauthpath,omitempty"`
-	TransitPath string `json:"transitpath,omitempty"`
+	Namespace   string `json:"namespace"`
+	Transitkey  string `json:"transitkey"`
+	Vaultrole   string `json:"vaultrole"`
+	Address     string `json:"address"`
+	AuthPath    string `json:"authpath"`
+	TransitPath string `json:"transitpath"`
+	AuthMethod  string `json:"authmethod"`
+}
+
+func fatalOrErr(err error) error {
+	// it can happen that token gets ivalidated - shutdown in these cases
+	// for others it just "flows through"
+	wrappedErr := WrapVaultError(err.Error())
+	if errors.Is(wrappedErr, ErrInvalidToken) {
+		zap.L().Fatal("EXIT:token: invalid token, restarting.")
+		return err		
+	}
+	return err
 }
 
 func readConfig(configFilePath string) *hvaultRemoteService {
-	ctx, err := os.ReadFile(configFilePath)
+	data, err := os.ReadFile(configFilePath)
 	if err != nil {
 		zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
 	}
 	vaultService := &hvaultRemoteService{}
-	err = json.Unmarshal(([]byte(ctx)), &vaultService)
+	err = json.Unmarshal(([]byte(data)), &vaultService)
 	if err != nil {
 		zap.L().Fatal("EXIT:ctx: invalid JSON config file: " + err.Error())
+	}
+	if vaultService.TransitPath == "" {
+		vaultService.TransitPath = "transit"
 	}
 	return vaultService
 }
 
-func NewVaultClientRemoteService(configFilePath string, addr string, debug bool) (service.Service, error) {
-	// ctx, err := os.ReadFile(configFilePath)
-	// if err != nil {
-	// 	zap.L().Fatal("EXIT:ctx: failed to read vault config file with error: " + err.Error())
-	// }
-	// if len(keyID) == 0 {
-	// 	zap.L().Fatal("EXIT:keyID len: invalid keyID")
-	// }
+func setupClient(cfg *api.Config, ns string, method string, roleName string, mountPath string) (*api.Client, api.AuthMethod) {	
+	authMethod, err := createAuthMethod(method, roleName, mountPath)
+	if err != nil {
+		zap.L().Fatal("EXIT:client: failed to create auth method: " + err.Error())
+	}
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		zap.L().Fatal("EXIT:client: failed to initialize Vault client with error: " + err.Error())
+	}
+	client.SetNamespace(ns)
+	authInfo, err := client.Auth().Login(context.Background(), authMethod)
+	if err != nil {
+		zap.L().Fatal("EXIT:authInfo: unable to log in with error:" + err.Error())
+	}
+	if authInfo == nil {
+		zap.L().Fatal("EXIT:authInfo: no auth info was returned after login")
+	}
+	return client, authMethod
+}
 
-	// vaultService := &hvaultRemoteService{}
-	// vaultService.UnixSock = addr
-	// json.Unmarshal(([]byte(ctx)), &vaultService)
-
+func NewVaultClientRemoteService(configFilePath string) (service.Service, error) {
 	vaultService := readConfig(configFilePath)
-	// use the default path if unspecified/left empty
-	if vaultService.K8sAuthPath == "" {
-		vaultService.K8sAuthPath = "kubernetes"
-	}
-
-	if vaultService.TransitPath == "" {
-		vaultService.TransitPath = "transit"
-	}
-
-	vaultService.UnixSock = addr
-
 	vaultconfig := api.DefaultConfig()
 	vaultconfig.Address = vaultService.Address
-
-	// keypath := fmt.Sprintf("transit/keys/%s", vaultService.Transitkey)
 
 	zap.L().Debug("Config loaded:", zap.String("Vault address", vaultService.Address),
 		zap.String("Transit key name", vaultService.Transitkey),
 		zap.String("Vault role", vaultService.Vaultrole),
 		zap.String("Vault namespace", vaultService.Namespace),
-		zap.String("K8S Auth mount path", vaultService.K8sAuthPath),
-		zap.String("Transit engine mount path", vaultService.TransitPath))
-
-	client, err := api.NewClient(vaultconfig)
-	if err != nil {
-		zap.L().Fatal("EXIT:client: failed to initialize Vault client with error: " + err.Error())
-	}
-
-	k8sAuth, err := auth.NewKubernetesAuth(
-		vaultService.Vaultrole,
-		auth.WithMountPath(vaultService.K8sAuthPath),
+		zap.String("Auth method", vaultService.AuthMethod),
+		zap.String("Auth mount path", vaultService.AuthPath),
+		zap.String("Transit engine mount path", vaultService.TransitPath),
 	)
-
-	if err != nil {
-		zap.L().Fatal("EXIT:k8sAuth: unable to initialize Kubernetes auth method with error: " + err.Error())
-	}
-
-	authInfo, err := client.Auth().Login(context.Background(), k8sAuth)
-	if err != nil {
-		zap.L().Fatal("EXIT:authInfo: unable to log in with Kubernetes auth with error:" + err.Error())
-	}
-	if authInfo == nil {
-		zap.L().Fatal("EXIT:authInfo: no kubernetes auth info was returned after login")
-	}
-
-	// vaultService = &hvaultRemoteService{
-	// 	Client: client,
-	// }
-	vaultService.Client = client
-
-	client.SetNamespace(vaultService.Namespace)
+	// setup client with selected auth method
+	vaultService.Client, vaultService.ClientAuthMethod = setupClient(vaultconfig,
+		vaultService.Namespace,
+		vaultService.AuthMethod, 
+		vaultService.Vaultrole, 
+		vaultService.AuthPath)
 
 	// obtain latest version of the transit key and create a key ID for it
 	key, err := vaultService.GetTransitKey(context.Background())
@@ -125,38 +115,25 @@ func NewVaultClientRemoteService(configFilePath string, addr string, debug bool)
 	vaultService.LatestKeyID = createLatestTransitKeyId(key)
 	zap.L().Info("Received key ID on startup: " + vaultService.LatestKeyID)
 
-	// initial token check - it can happen that k8s restarted ??
+	// initial token check
 	err = vaultService.CheckTokenValidity(context.Background())
 	if err != nil {
 		zap.L().Fatal("EXIT:token: could not check token validity: " + err.Error())
-		return vaultService, err
 	}
 
 	return vaultService, nil
 }
 
 func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext []byte) (*service.EncryptResponse, error) {
-	enckeypath := fmt.Sprintf("%s/encrypt/%s", s.TransitPath, s.Transitkey)
-	encodepayload := map[string]interface{}{
-		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
-	}
-
-	encrypt, err := s.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	zap.L().Debug("Received encrypt request with UID: " + uid)
+	enresult, err := s.encrypt(ctx, plaintext)
 	if err != nil {
-		zap.L().Debug("encrypt:plaintext: " + string([]byte(plaintext)) +
-			" keypath: " + enckeypath + "\nencodepayload: " + fmt.Sprintf("%v", encodepayload))
-		//zap.L().Fatal("EXIT:encrypt: with error: " + err.Error())
-		zap.L().Error("encrypt: with error: " + err.Error())
-		return nil, err
-	}
-	enresult, ok := encrypt.Data["ciphertext"].(string)
-	if !ok {
 		zap.L().Error("enresult: invalid response")
 		return nil, errors.New("Invalid response")
 	}
 
 	return &service.EncryptResponse{
-		Ciphertext: []byte(enresult),
+		Ciphertext: enresult,
 		KeyID:      s.LatestKeyID,
 		Annotations: map[string][]byte{
 			annotationKey: []byte("1"),
@@ -164,7 +141,28 @@ func (s *hvaultRemoteService) Encrypt(ctx context.Context, uid string, plaintext
 	}, nil
 }
 
+func (s *hvaultRemoteService) encrypt(ctx context.Context, plaintext []byte) ([]byte, error) {
+	enckeypath := fmt.Sprintf("%s/encrypt/%s", s.TransitPath, s.Transitkey)
+	encodepayload := map[string]interface{}{
+		"plaintext": base64.StdEncoding.EncodeToString(plaintext),
+	}
+	encrypt, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().WriteWithContext(ctx, enckeypath, encodepayload)
+	})
+	if err != nil {
+		zap.L().Error("encrypt: error: " + err.Error())
+		return nil, fatalOrErr(err)
+	}
+	enresult, ok := encrypt.Data["ciphertext"].(string)
+	if !ok {
+		zap.L().Error("enresult: invalid response")
+		return nil, errors.New("Invalid response")
+	}
+	return []byte(enresult), nil
+}
+
 func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *service.DecryptRequest) ([]byte, error) {
+	zap.L().Debug("Received decrypt request with UID: " + uid)
 	if len(req.Annotations) != 1 {
 		zap.L().Error("len:annotations: " + fmt.Sprintf("%v", req.Annotations))
 		return nil, fmt.Errorf("/!\\ invalid annotations")
@@ -172,40 +170,35 @@ func (s *hvaultRemoteService) Decrypt(ctx context.Context, uid string, req *serv
 	if v, ok := req.Annotations[annotationKey]; !ok || string(v) != "1" {
 		return nil, fmt.Errorf("/!\\ invalid version in annotations")
 	}
+	return s.decrypt(ctx, []byte(req.Ciphertext))
+}
 
+func (s *hvaultRemoteService) decrypt(ctx context.Context, ciphertext []byte) ([]byte, error) {
 	decryptkeypath := fmt.Sprintf("%s/decrypt/%s", s.TransitPath, s.Transitkey)
-
 	encryptedPayload := map[string]interface{}{
-		"ciphertext": string([]byte(req.Ciphertext)),
+		"ciphertext": string(ciphertext),
 	}
-
-	encryptedResponse, err := s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
+	encryptedResponse, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Logical().WriteWithContext(ctx, decryptkeypath, encryptedPayload)
+	})
 	if err != nil {
 		zap.L().Error("encryptedResponse: with error: " + err.Error())
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
-
 	response, ok := encryptedResponse.Data["plaintext"].(string)
 	if !ok {
 		zap.L().Error("response: invalid response")
 		return nil, errors.New("response: invalid response")
 	}
-
 	decodepayload, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {
 		zap.L().Error("decodepayload: with error: " + err.Error())
 		return nil, err
 	}
-
 	return decodepayload, nil
-
 }
 
 func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusResponse, error) {
-	// check if unix socket is still present
-	if _, err := os.Stat(s.UnixSock); errors.Is(err, os.ErrNotExist) {
-		zap.L().Fatal("ERROR:status: socket removed: " + err.Error())
-	}
 	// get transit key, obtain the latest version of the transit key
 	key, err := s.GetTransitKey(ctx)
 	if err != nil {
@@ -221,7 +214,7 @@ func (s *hvaultRemoteService) Status(ctx context.Context) (*service.StatusRespon
 		zap.L().Error("ERROR:Status: unhealthy: " + err.Error())
 		return s.createStatusResponse(healthNOK), err
 	}
-
+	// all OK
 	return s.createStatusResponse(healthOK), nil
 }
 
@@ -229,35 +222,23 @@ func (s *hvaultRemoteService) Health(ctx context.Context) error {
 	// check if it has valid token lease (Vault)
 	err := s.CheckTokenValidity(ctx)
 	if err != nil {
-		zap.L().Fatal("ERROR:health:token: token validity check failed: " + err.Error())
 		return err
 	}
-	// check encrypt/decrypt if operation can be performed correctly
-	enc, err := s.Encrypt(ctx, fmt.Sprintf("health-enc-%s", strconv.FormatInt(time.Now().Unix(), 10)), []byte(healthy))
+	// check Encryption as Service functionality (transit)
+	enc, err := s.encrypt(ctx, []byte(healthy))
 	if err != nil {
 		zap.L().Error("Health: encrypt failed: " + err.Error())
 		return err
 	}
-
-	dec, err := s.Decrypt(ctx, fmt.Sprintf("health-dec-%s", strconv.FormatInt(time.Now().Unix(), 10)), &service.DecryptRequest{
-		Ciphertext: enc.Ciphertext,
-		KeyID:      s.LatestKeyID,
-		Annotations: map[string][]byte{
-			annotationKey: []byte("1"),
-		},
-	})
-
+	dec, err := s.decrypt(ctx, enc)
 	if err != nil {
 		return errors.New("Health: decrypt failed: " + err.Error())
 	}
-
 	// decrypted plaintext does not match
 	if healthy != string(dec) {
 		return errors.New("Health check failed: decrypt does not match")
 	}
-
 	zap.L().Info("Health: Health check OK")
-
 	return nil
 }
 
@@ -271,10 +252,12 @@ func (s *hvaultRemoteService) createStatusResponse(healthz string) *service.Stat
 }
 
 func (s *hvaultRemoteService) GetTransitKey(ctx context.Context) (*api.Secret, error) {
-	key, err := s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
+	// retry read 3x with 150 millisec delay between them
+	key, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().ReadWithContext(ctx, fmt.Sprintf("%s/keys/%s", s.TransitPath, s.Transitkey))
+	})
 	if err != nil {
-		// no transit key or no token
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	zap.L().Debug("Got transit key: " + fmt.Sprintf("%v", map[string]interface{}{
 		"latest_version":         key.Data["latest_version"],
@@ -300,12 +283,12 @@ func createLatestTransitKeyId(key *api.Secret) string {
 func (s *hvaultRemoteService) GetVaultToken(ctx context.Context) (*api.Secret, error) {
 	// requires policy to have: "auth/token/lookup-self read and "auth/token/renew-self" update
 	path := fmt.Sprintf("auth/token/lookup-self")
-	token, err := s.Client.Logical().ReadWithContext(ctx, path)
+
+	token, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().ReadWithContext(ctx, path)
+	})
 	if err != nil {
-		if strings.Contains(err.Error(), "invalid token") {
-			zap.L().Fatal("EXIT:token: invalid token, restarting: " + err.Error())
-		}
-		return nil, err
+		return nil, fatalOrErr(err)
 	}
 	return token, nil
 }
@@ -354,16 +337,48 @@ func (s *hvaultRemoteService) CheckTokenValidity(ctx context.Context) error {
 func (s *hvaultRemoteService) RenewOwnToken(ctx context.Context, creation_ttl int) error {
 	// renews with the original creation_ttl
 	path := fmt.Sprintf("auth/token/renew-self")
-	_, err := s.Client.Logical().WriteWithContext(ctx, path, map[string]any{"data": map[string]any{
-		"ttl":       fmt.Sprintf("%d", creation_ttl),
-		"renewable": "true"}})
+	_, err := retryVaultOp(s, ctx, 3, retrySleep, func()(*api.Secret, error){
+		return s.Client.Logical().WriteWithContext(ctx, path, 
+			map[string]any{"data": map[string]any{
+				"ttl":       fmt.Sprintf("%d", creation_ttl),
+				"renewable": "true"}})
+	})
 	if err != nil {
-		// check why the token cannot be renewed
-		// if e.g. permission denied -> fatal (token modified, policy changed ..)
-		if strings.Contains(err.Error(), "invalid token") {
-			zap.L().Fatal("EXIT:token: unable to renew token: " + err.Error())
-		}
-		return err
+		return fatalOrErr(err)
 	}
 	return nil
+}
+
+func retryVaultOp[T any](s *hvaultRemoteService, ctx context.Context, amount int, sleepTime time.Duration, f func()(T, error)) (result T, err error) {
+	// Retries operation f() "amount", times, with "sleepTime" in between them.
+	// If operation cannot be performed due to e.g. expired login, try to login in again and retry.
+	// Applicable wherever read/write call to Vault is performed.
+	for i := 0; i < amount; i++ {
+		select {
+		case <-ctx.Done():
+			return result, ctx.Err()
+		default:
+			result, err = f()
+			if err != nil {
+				zap.L().Error("Got error: " + err.Error())
+				wrappedErr := WrapVaultError(err.Error())
+				if errors.Is(wrappedErr, ErrInvalidToken) {
+					// re-login
+					_, err := s.Client.Auth().Login(ctx, s.ClientAuthMethod)
+					if err != nil {
+						zap.L().Error("Error: Could not relogin: " + err.Error())
+					} else {
+						// relogin OK
+						zap.L().Debug("Relogin succesful.")
+					}
+				} // other error that cannot be solved by relogin: try calling f() again
+			} else {
+				// no error, no need to retry
+				zap.L().Debug("Operation succeded on attempt " + fmt.Sprintf("%d", i+1))
+				return result, nil
+			}
+			time.Sleep(sleepTime)
+		}
+	}
+	return result, err
 }

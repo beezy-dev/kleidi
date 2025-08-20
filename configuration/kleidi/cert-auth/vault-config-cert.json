@@ -1,0 +1,9 @@
+{
+  "namespace": "",
+  "transitkey": "kleidi",
+  "vaultrole": "kleidi",
+  "address": "http://172.20.10.9:8200",
+  "transitpath": "transit",
+  "authmethod": "cert",
+  "authpath": "certauth"
+}

@@ -1,6 +1,9 @@
 {
-  "Namespace": "",
-  "Transitkey": "kleidi",
-  "Vaultrole": "kleidi",
-  "Address": "http://192.168.2.28:8200" 
+  "namespace": "",
+  "transitkey": "kleidi",
+  "vaultrole": "kleidi",
+  "address": "http://192.168.2.28:8200",
+  "transitpath": "transit",
+  "authmethod": "k8s",
+  "authpath": "kubernetes"
 }

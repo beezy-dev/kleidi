@@ -1,7 +1,7 @@
-FROM docker.io/library/golang:1.22.0-bullseye AS build
+FROM docker.io/library/golang:1.24.5-bookworm AS build
 
 ARG VERSION
-ENV VERSION $VERSION
+ENV VERSION=$VERSION
 WORKDIR /work
 
 # Copy the source
@@ -11,6 +11,8 @@ COPY go.mod ./
 RUN go mod download
 
 RUN CGO_ENABLED=1 GO111MODULE=on go build -ldflags "-X main.kleidiVersion=$VERSION" -a -installsuffix cgo cmd/kleidi/main.go
+
+RUN go test -v ./...
 
 FROM quay.io/centos/centos:stream9
 
